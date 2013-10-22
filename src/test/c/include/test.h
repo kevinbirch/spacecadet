@@ -32,3 +32,4 @@
 
 
 Suite *hashtable_suite(void);
+Suite *vector_suite(void);

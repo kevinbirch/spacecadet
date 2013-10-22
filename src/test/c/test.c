@@ -7,6 +7,7 @@
 int main(void)
 {
     SRunner *runner = srunner_create(hashtable_suite());
+    srunner_add_suite(runner, vector_suite());
     
     srunner_run_all(runner, CK_NORMAL);
 
