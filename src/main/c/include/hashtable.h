@@ -38,8 +38,8 @@
 typedef struct hashtable_s Hashtable;
 
 typedef bool (*compare_function)(void *key1, void *key2);
-typedef bool (*hashtable_map_function)(void *key, void *value, void *context);
-typedef bool (*hashtable_map_item_function)(void *item, void *context);
+typedef bool (*hashtable_iterator)(void *key, void *value, void *context);
+typedef bool (*hashtable_item_iterator)(void *item, void *context);
 
 Hashtable *make_hashtable(compare_function comparitor);
 Hashtable *make_hashtable_with_function(compare_function comparitor,
@@ -80,8 +80,8 @@ Hashtable *hashtable_copy(Hashtable *hashtable);
 void *hashtable_remove(Hashtable *hashtable, void *key);
 void hashtable_clear(Hashtable *hashtable);
 
-bool hashtable_map(Hashtable *hashtable, hashtable_map_function function, void *context);
-bool hashtable_map_keys(Hashtable *hashtable, hashtable_map_item_function function, void *context);
-bool hashtable_map_values(Hashtable *hashtable, hashtable_map_item_function function, void *context);
+bool hashtable_iterate(Hashtable *hashtable, hashtable_iterator iterator, void *context);
+bool hashtable_iterate_keys(Hashtable *hashtable, hashtable_item_iterator iterator, void *context);
+bool hashtable_iterate_values(Hashtable *hashtable, hashtable_item_iterator iterator, void *context);
 
 void hashtable_summary(Hashtable *hashtable, FILE *stream);

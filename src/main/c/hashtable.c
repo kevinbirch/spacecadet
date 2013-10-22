@@ -74,11 +74,19 @@ typedef struct chain_s Chain;
 
 struct item_adapter_s
 {
-    hashtable_map_item_function function;
+    hashtable_item_iterator iterator;
     void *original_context;
 };
 
 typedef struct item_adapter_s item_adapter;
+
+struct equality_adapter_s
+{
+    Hashtable *other;
+    compare_function compare;
+};
+
+typedef struct equality_adapter_s equality_adapter;
 
 static Hashtable *alloc(size_t size);
 static inline Hashtable *alloc_table(Hashtable *hashtable, size_t size);
@@ -95,8 +103,8 @@ static void *chained_remove(Hashtable *hashtable, size_t index, void *key);
 
 static void rehash(Hashtable *hashtable);
 
-static bool key_item_function(void *key, void *value __attribute__((unused)), void *context);
-static bool value_item_function(void *key __attribute__((unused)), void *value, void *context);
+static bool key_item_iterator(void *key, void *value __attribute__((unused)), void *context);
+static bool value_item_iterator(void *key __attribute__((unused)), void *value, void *context);
 static bool map_into(void *key, void *value, void *context);
 bool contains_key_value(void *key, void *value, void *context);
 
@@ -277,14 +285,6 @@ void hashtable_clear(Hashtable *hashtable)
     hashtable->occupied = 0;
 }
 
-struct equality_adapter_s
-{
-    Hashtable *other;
-    compare_function compare;
-};
-
-typedef struct equality_adapter_s equality_adapter;
-
 bool contains_key_value(void *key, void *value, void *context)
 {
     equality_adapter *adapter = (equality_adapter *)context;
@@ -306,7 +306,7 @@ bool hashtable_equals(Hashtable *hashtable1, Hashtable *hashtable2, compare_func
     {
         return false;
     }
-    return hashtable_map(hashtable1, contains_key_value, &(equality_adapter){hashtable2, comparitor});
+    return hashtable_iterate(hashtable1, contains_key_value, &(equality_adapter){hashtable2, comparitor});
 }
 
 bool hashtable_contains(Hashtable *hashtable, void *key)
@@ -505,7 +505,7 @@ static void *add_to_chain(Hashtable *hashtable, size_t index, void *key, void *v
 static void expand_chain(Hashtable *hashtable, size_t index, void *key, void *value)
 {
     Chain *chain = (Chain *)hashtable->entries[index + 1];
-    Chain *expansion = malloc(sizeof(Chain) + (sizeof(uint8_t *) * (chain->length + 2)));
+    Chain *expansion = calloc(1, sizeof(Chain) + (sizeof(uint8_t *) * (chain->length + 2)));
     if(NULL == expansion)
     {
         return;
@@ -554,7 +554,7 @@ static bool map_into(void *key, void *value, void *context)
 
 void hashtable_put_all(Hashtable *to, Hashtable *from)
 {
-    hashtable_map(from, map_into, to);
+    hashtable_iterate(from, map_into, to);
 }
 
 Hashtable *hashtable_copy(Hashtable *hashtable)
@@ -638,9 +638,9 @@ static void *chained_remove(Hashtable *hashtable, size_t index, void *key)
     return NULL;
 }
 
-bool hashtable_map(Hashtable *hashtable, hashtable_map_function function, void *context)
+bool hashtable_iterate(Hashtable *hashtable, hashtable_iterator iterator, void *context)
 {
-    if(NULL == hashtable || NULL == function)
+    if(NULL == hashtable || NULL == iterator)
     {
         errno = EINVAL;
         return false;
@@ -652,7 +652,7 @@ bool hashtable_map(Hashtable *hashtable, hashtable_map_function function, void *
             Chain *chain = (Chain *)hashtable->entries[i + 1];
             for(size_t j = 0; j < chain->length && NULL != chain->entries[j]; j += 2)
             {
-                if(!function(hashtable->entries[i], hashtable->entries[i + 1], context))
+                if(!iterator(hashtable->entries[i], hashtable->entries[i + 1], context))
                 {
                     return false;
                 }
@@ -660,7 +660,7 @@ bool hashtable_map(Hashtable *hashtable, hashtable_map_function function, void *
         }
         else if(NULL != hashtable->entries[i])
         {
-            if(!function(hashtable->entries[i], hashtable->entries[i + 1], context))
+            if(!iterator(hashtable->entries[i], hashtable->entries[i + 1], context))
             {
                 return false;
             }
@@ -670,26 +670,26 @@ bool hashtable_map(Hashtable *hashtable, hashtable_map_function function, void *
     return true;
 }
 
-static bool key_item_function(void *key, void *value __attribute__((unused)), void *context)
+static bool key_item_iterator(void *key, void *value __attribute__((unused)), void *context)
 {
     item_adapter *adapter = (item_adapter *)context;
-    return adapter->function(key, adapter->original_context);
+    return adapter->iterator(key, adapter->original_context);
 }
 
-static bool value_item_function(void *key __attribute__((unused)), void *value, void *context)
+static bool value_item_iterator(void *key __attribute__((unused)), void *value, void *context)
 {
     item_adapter *adapter = (item_adapter *)context;
-    return adapter->function(value, adapter->original_context);
+    return adapter->iterator(value, adapter->original_context);
 }
 
-bool hashtable_map_keys(Hashtable *hashtable, hashtable_map_item_function function, void *context)
+bool hashtable_iterate_keys(Hashtable *hashtable, hashtable_item_iterator iterator, void *context)
 {
-    return hashtable_map(hashtable, key_item_function, &(item_adapter){function, context});
+    return hashtable_iterate(hashtable, key_item_iterator, &(item_adapter){iterator, context});
 }
 
-bool hashtable_map_values(Hashtable *hashtable, hashtable_map_item_function function, void *context)
+bool hashtable_iterate_values(Hashtable *hashtable, hashtable_item_iterator iterator, void *context)
 {
-    return hashtable_map(hashtable, value_item_function, &(item_adapter){function, context});
+    return hashtable_iterate(hashtable, value_item_iterator, &(item_adapter){iterator, context});
 }
 
 static inline size_t hash_index(Hashtable *hashtable, void *key)
