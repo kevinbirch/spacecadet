@@ -147,6 +147,11 @@ Hashtable *make_hashtable_with_capacity_factor_function(compare_function compari
                                                         float load_factor,
                                                         hash_function function)
 {
+    if(NULL == comparitor || 0 == capacity_hint || 1.0f < load_factor || NULL == function)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
     size_t capacity = normalize_capacity(capacity_hint);
     Hashtable *result = alloc(capacity);
     if(NULL == result)
