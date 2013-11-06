@@ -54,14 +54,14 @@ struct hashtable_s
     bool          mutable;
 
     /** the key hashing function */
-    hash_function hash;
+    hash_function    hash;
     /** the key comparison function */
     compare_function compare;
 
     /** the length of the entries table */
-    size_t        length;
+    size_t    length;
     /** the keys and values table */
-    uint8_t     **entries;
+    uint8_t **entries;
 };
 
 struct chain_s
@@ -82,19 +82,19 @@ typedef struct item_adapter_s item_adapter;
 
 struct equality_adapter_s
 {
-    Hashtable *other;
+    const Hashtable *other;
     compare_function compare;
 };
 
 typedef struct equality_adapter_s equality_adapter;
 
 static Hashtable *alloc(size_t size);
-static inline Hashtable *alloc_table(Hashtable *hashtable, size_t size);
+static inline void alloc_table(Hashtable *hashtable, size_t size);
 static void init(Hashtable *hashtable, compare_function comparitor, size_t size, float load_factor, hash_function function);
 static inline size_t normalize_capacity(size_t hint);
 
-static bool chained_contains(Hashtable *hashtable, size_t index, void *key);
-static void *chained_get(Hashtable *hashtable, size_t index, void *key);
+static bool chained_contains(const Hashtable *hashtable, size_t index, const void *key);
+static void *chained_get(const Hashtable *hashtable, size_t index, const void *key);
 
 static void *add_to_chain(Hashtable *hashtable, size_t index, void *key, void *value);
 static void expand_chain(Hashtable *hashtable, size_t index, void *key, void *value);
@@ -108,8 +108,7 @@ static bool value_item_iterator(void *key __attribute__((unused)), void *value, 
 static bool map_into(void *key, void *value, void *context);
 bool contains_key_value(void *key, void *value, void *context);
 
-static inline size_t hash_index(Hashtable *hashtable, void *key);
-static hashcode default_hash_function(void *key);
+static inline size_t hash_index(const Hashtable *hashtable, const void *key);
 
 Hashtable *make_hashtable(compare_function comparitor)
 {
@@ -139,7 +138,7 @@ Hashtable *make_hashtable_with_capacity_factor(compare_function comparitor,
                                                size_t capacity_hint,
                                                float load_factor)
 {
-    return make_hashtable_with_capacity_factor_function(comparitor, capacity_hint, load_factor, default_hash_function);
+    return make_hashtable_with_capacity_factor_function(comparitor, capacity_hint, load_factor, identity_xor_hash);
 }
 
 Hashtable *make_hashtable_with_capacity_factor_function(compare_function comparitor, 
@@ -182,7 +181,7 @@ static Hashtable *alloc(size_t capacity)
         return NULL;
     }
 
-    result = alloc_table(result, capacity);
+    alloc_table(result, capacity);
     if(NULL == result->entries)
     {
         free(result);
@@ -192,11 +191,10 @@ static Hashtable *alloc(size_t capacity)
     return result;
 }
 
-static inline Hashtable *alloc_table(Hashtable *hashtable, size_t capacity)
+static inline void alloc_table(Hashtable *hashtable, size_t capacity)
 {
     // the number of table cells allocated is 2x capacity to hold both keys and values
     hashtable->entries = calloc(capacity << 1, sizeof(uint8_t *));    
-    return hashtable;
 }
 
 static void init(Hashtable *hashtable, 
@@ -235,7 +233,7 @@ void hashtable_free(Hashtable *hashtable)
     free(hashtable);
 }
 
-bool hashtable_is_mutable(Hashtable *hashtable)
+bool hashtable_is_mutable(const Hashtable *hashtable)
 {
     return hashtable->mutable;
 }
@@ -250,27 +248,27 @@ void hashtable_set_immutable(Hashtable *hashtable)
     hashtable->mutable = false;
 }
 
-bool hashtable_is_immutable(Hashtable *hashtable)
+bool hashtable_is_immutable(const Hashtable *hashtable)
 {
     return !hashtable->mutable;
 }
 
-float hashtable_load_factor(Hashtable *hashtable)
+float hashtable_load_factor(const Hashtable *hashtable)
 {
     return hashtable->load_factor;
 }
 
-size_t hashtable_size(Hashtable *hashtable)
+size_t hashtable_size(const Hashtable *hashtable)
 {
     return hashtable->occupied;
 }
 
-size_t hashtable_capacity(Hashtable *hashtable)
+size_t hashtable_capacity(const Hashtable *hashtable)
 {
     return hashtable->capacity;
 }
 
-bool hashtable_is_empty(Hashtable *hashtable)
+bool hashtable_is_empty(const Hashtable *hashtable)
 {
     return 0 == hashtable->occupied;
 }
@@ -301,20 +299,20 @@ bool contains_key_value(void *key, void *value, void *context)
     return adapter->compare(value, other_value);
 }
 
-bool hashtable_equals(Hashtable *hashtable1, Hashtable *hashtable2, compare_function comparitor)
+bool hashtable_equals(const Hashtable *one, const Hashtable *two, compare_function comparitor)
 {
-    if(hashtable1 == hashtable2)
+    if(one == two)
     {
         return true;
     }
-    if(hashtable_size(hashtable1) != hashtable_size(hashtable2))
+    if(hashtable_size(one) != hashtable_size(two))
     {
         return false;
     }
-    return hashtable_iterate(hashtable1, contains_key_value, &(equality_adapter){hashtable2, comparitor});
+    return hashtable_iterate(one, contains_key_value, &(equality_adapter){two, comparitor});
 }
 
-bool hashtable_contains(Hashtable *hashtable, void *key)
+bool hashtable_contains(const Hashtable *hashtable, const void *key)
 {
     if(NULL == hashtable || NULL == key)
     {
@@ -338,7 +336,7 @@ bool hashtable_contains(Hashtable *hashtable, void *key)
     return false;
 }
 
-static bool chained_contains(Hashtable *hashtable, size_t index, void *key)
+static bool chained_contains(const Hashtable *hashtable, size_t index, const void *key)
 {
     Chain *chain = (Chain *)hashtable->entries[index + 1];
     for(size_t i = 0; i < chain->length; i += 2)
@@ -355,7 +353,7 @@ static bool chained_contains(Hashtable *hashtable, size_t index, void *key)
     return false;
 }
 
-void *hashtable_get(Hashtable *hashtable, void *key)
+void *hashtable_get(const Hashtable *hashtable, const void *key)
 {
     if(NULL == hashtable || NULL == key)
     {
@@ -380,7 +378,7 @@ void *hashtable_get(Hashtable *hashtable, void *key)
     return NULL;
 }
 
-static void *chained_get(Hashtable *hashtable, size_t index, void *key)
+static void *chained_get(const Hashtable *hashtable, size_t index, const void *key)
 {
     Chain *chain = (Chain *)hashtable->entries[index + 1];
     for(size_t i = 0; i < chain->length; i += 2)
@@ -391,6 +389,7 @@ static void *chained_get(Hashtable *hashtable, size_t index, void *key)
         }
         if(hashtable->compare(chain->entries[i], key))
         {
+            void *result = chain->entries[i + 1];
             if(0 != i)
             {
                 // N.B. - move most recent fetch to front
@@ -401,7 +400,7 @@ static void *chained_get(Hashtable *hashtable, size_t index, void *key)
                 chain->entries[1] = chain->entries[i + 1];
                 chain->entries[i + 1] = tmp;
             }
-            return chain->entries[i + 1];
+            return result;
         }
     }
     return NULL;
@@ -557,12 +556,12 @@ static bool map_into(void *key, void *value, void *context)
     return 0 == errno;
 }
 
-void hashtable_put_all(Hashtable *to, Hashtable *from)
+void hashtable_put_all(Hashtable *to, const Hashtable *from)
 {
     hashtable_iterate(from, map_into, to);
 }
 
-Hashtable *hashtable_copy(Hashtable *hashtable)
+Hashtable *hashtable_copy(const Hashtable *hashtable)
 {
     Hashtable *result = make_hashtable_with_capacity_factor_function(
         hashtable->compare, hashtable->capacity, hashtable->load_factor, hashtable->hash);
@@ -643,7 +642,7 @@ static void *chained_remove(Hashtable *hashtable, size_t index, void *key)
     return NULL;
 }
 
-bool hashtable_iterate(Hashtable *hashtable, hashtable_iterator iterator, void *context)
+bool hashtable_iterate(const Hashtable *hashtable, hashtable_iterator iterator, void *context)
 {
     if(NULL == hashtable || NULL == iterator)
     {
@@ -657,7 +656,7 @@ bool hashtable_iterate(Hashtable *hashtable, hashtable_iterator iterator, void *
             Chain *chain = (Chain *)hashtable->entries[i + 1];
             for(size_t j = 0; j < chain->length && NULL != chain->entries[j]; j += 2)
             {
-                if(!iterator(hashtable->entries[i], hashtable->entries[i + 1], context))
+                if(!iterator(chain->entries[j], chain->entries[j + 1], context))
                 {
                     return false;
                 }
@@ -687,17 +686,17 @@ static bool value_item_iterator(void *key __attribute__((unused)), void *value, 
     return adapter->iterator(value, adapter->original_context);
 }
 
-bool hashtable_iterate_keys(Hashtable *hashtable, hashtable_item_iterator iterator, void *context)
+bool hashtable_iterate_keys(const Hashtable *hashtable, hashtable_item_iterator iterator, void *context)
 {
     return hashtable_iterate(hashtable, key_item_iterator, &(item_adapter){iterator, context});
 }
 
-bool hashtable_iterate_values(Hashtable *hashtable, hashtable_item_iterator iterator, void *context)
+bool hashtable_iterate_values(const Hashtable *hashtable, hashtable_item_iterator iterator, void *context)
 {
     return hashtable_iterate(hashtable, value_item_iterator, &(item_adapter){iterator, context});
 }
 
-static inline size_t hash_index(Hashtable *hashtable, void *key)
+static inline size_t hash_index(const Hashtable *hashtable, const void * key)
 {
     hashcode h = hashtable->hash(key);
     return (h & (hashtable->length >> 1) - 1) << 1;
@@ -735,15 +734,7 @@ static void rehash(Hashtable *hashtable)
     free(table);
 }
 
-static hashcode default_hash_function(void *key)
-{
-    hashcode result = (hashcode)key;
-    result ^= result >> 20 ^ result >> 12;
-    result ^= result >> 7 ^ result >> 4;
-    return result;
-}
-
-void hashtable_summary(Hashtable *hashtable, FILE *stream)
+void hashtable_summary(const Hashtable *hashtable, FILE *stream)
 {
     fprintf(stream, "hashtable summary:\n");
     fprintf(stream, "mutable: %s\n", hashtable_is_mutable(hashtable) ? "yes" : "no");

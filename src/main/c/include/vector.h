@@ -44,18 +44,21 @@ Vector *make_vector_with_capacity(size_t capacity);
 
 void    vector_free(Vector *value);
         
-size_t  vector_length(const Vector * restrict vector);
-bool    vector_is_empty(const Vector * restrict vector);
+size_t  vector_length(const Vector *vector);
+size_t  vector_capacity(const Vector *vector);
+bool    vector_is_empty(const Vector *vector);
         
-void   *vector_get(const Vector * restrict vector, size_t index);
-bool    vector_add(Vector * restrict vector,  void * restrict value);
-bool    vector_add_all(Vector * restrict vector,  Vector * restrict value);
-void   *vector_set(Vector * restrict vector, void *value, size_t index);
-void   *vector_remove(Vector * restrict vector, size_t index);
-void    vector_clear(Vector *vector);
-        
-bool    vector_iterate(const Vector * restrict vector, vector_iterator iterator, void *context);
+void   *vector_get(const Vector *vector, size_t index);
+bool    vector_add(Vector *vector,  void *value);
+bool    vector_add_all(Vector *vector,  Vector *value);
+void   *vector_set(Vector *vector, void *value, size_t index);
+void   *vector_remove(Vector *vector, size_t index);
 
-Vector *vector_map(const Vector * restrict vector, vector_map_function function, void *context);
-Vector *vector_map_into(const Vector * restrict vector, vector_map_function function, void *context, Vector * restrict target);
+void    vector_clear(Vector *vector);
+bool    vector_trim(Vector *vector);
+        
+bool    vector_iterate(const Vector *vector, vector_iterator iterator, void *context);
+
+Vector *vector_map(const Vector *vector, vector_map_function function, void *context);
+Vector *vector_map_into(const Vector *vector, vector_map_function function, void *context, Vector *target);
 

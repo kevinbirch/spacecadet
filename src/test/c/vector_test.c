@@ -220,7 +220,11 @@ END_TEST
 
 void vector_setup(void)
 {
+    reset_errno();
     vector = make_vector_with_capacity(2);
+    assert_noerr();
+    assert_not_null(vector);
+    assert_int_eq(2, vector_capacity(vector));
 
     reset_errno();
     assert_true(vector_add(vector, (void *)foo));
@@ -281,6 +285,59 @@ START_TEST (test_remove)
     assert_noerr();
     assert_not_null(result);
     assert_ptr_eq(bar, result);
+}
+END_TEST
+
+START_TEST(clear)
+{
+    reset_errno();
+    vector_clear(vector);
+    assert_noerr();
+
+    assert_vector_empty(vector);
+    assert_vector_length(vector, 0);
+    assert_int_eq(2, vector_capacity(vector));
+}
+END_TEST
+
+START_TEST (trim)
+{
+    vector_free(vector);
+
+    reset_errno();
+    vector = make_vector_with_capacity(6);
+    assert_int_eq(6, vector_capacity(vector));
+    assert_noerr();
+    assert_not_null(vector);
+
+    reset_errno();
+    assert_true(vector_add(vector, (void *)foo));
+    assert_noerr();
+    assert_vector_length(vector, 1);
+
+    reset_errno();
+    assert_true(vector_add(vector, (void *)bar));
+    assert_noerr();
+    assert_vector_length(vector, 2);
+
+    
+    reset_errno();
+    assert_true(vector_trim(vector));
+    assert_noerr();
+    assert_vector_length(vector, 2);
+    assert_int_eq(2, vector_capacity(vector));
+
+    reset_errno();
+    char *one = vector_get(vector, 0);
+    assert_noerr();
+    assert_not_null(one);
+    assert_ptr_eq(foo, one);
+
+    reset_errno();
+    char *two = vector_get(vector, 1);
+    assert_noerr();
+    assert_not_null(two);
+    assert_ptr_eq(bar, two);
 }
 END_TEST
 
@@ -437,6 +494,8 @@ Suite *vector_suite(void)
     tcase_add_test(mutate_case, set);
     tcase_add_test(mutate_case, test_remove);
     tcase_add_test(mutate_case, add_all);
+    tcase_add_test(mutate_case, trim);
+    tcase_add_test(mutate_case, clear);
 
     TCase *iterate_case = tcase_create("iterate");
     tcase_add_checked_fixture(iterate_case, vector_setup, vector_teardown);

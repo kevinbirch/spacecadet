@@ -35,7 +35,7 @@
 
 #include "vector.h"
 
-static const size_t DEFAULT_CAPACITY = 5;
+static const size_t DEFAULT_CAPACITY = 4;
 
 struct vector_s
 {
@@ -88,21 +88,7 @@ void vector_free(Vector *vector)
     free(vector);
 }
 
-void vector_clear(Vector *vector)
-{
-    if(NULL == vector)
-    {
-        return;
-    }
-
-    if(0 != vector->length)
-    {
-        memset(vector->items, 0, sizeof(uint8_t *) * vector->length);
-        vector->length = 0;
-    }
-}
-
-size_t vector_length(const Vector * restrict vector)
+size_t vector_length(const Vector *vector)
 {
     if(NULL == vector)
     {
@@ -113,7 +99,18 @@ size_t vector_length(const Vector * restrict vector)
     return vector->length;
 }
 
-bool vector_is_empty(const Vector * restrict vector)
+size_t vector_capacity(const Vector *vector)
+{
+    if(NULL == vector)
+    {
+        errno = EINVAL;
+        return 0;
+    }
+
+    return vector->capacity;
+}
+
+bool vector_is_empty(const Vector *vector)
 {
     if(NULL == vector)
     {
@@ -124,7 +121,7 @@ bool vector_is_empty(const Vector * restrict vector)
     return 0 == vector->length;
 }
 
-void *vector_get(const Vector * restrict vector, size_t index)
+void *vector_get(const Vector *vector, size_t index)
 {
     if(NULL == vector || index >= vector->length)
     {
@@ -135,7 +132,7 @@ void *vector_get(const Vector * restrict vector, size_t index)
     return vector->items[index];
 }
 
-bool vector_add(Vector * restrict vector, void * restrict value)
+bool vector_add(Vector *vector, void *value)
 {
     if(NULL == vector || NULL == value)
     {
@@ -157,7 +154,7 @@ static bool add_to_vector_iterator(void *each, void *context)
     return vector_add(vector, each);
 }
 
-bool vector_add_all(Vector * restrict vector, Vector * restrict value)
+bool vector_add_all(Vector *vector, Vector *value)
 {
     if(NULL == vector || NULL == value)
     {
@@ -173,7 +170,7 @@ bool vector_add_all(Vector * restrict vector, Vector * restrict value)
     return result;
 }
 
-void *vector_set(Vector * restrict vector, void *value, size_t index)
+void *vector_set(Vector *vector, void *value, size_t index)
 {                                                                        
     if(NULL == vector || NULL == value || index >= vector->length)
     {
@@ -186,7 +183,7 @@ void *vector_set(Vector * restrict vector, void *value, size_t index)
     return previous;
 }
 
-void *vector_remove(Vector * restrict vector, size_t index)
+void *vector_remove(Vector *vector, size_t index)
 {
     if(NULL == vector || index >= vector->length)
     {
@@ -208,7 +205,39 @@ void *vector_remove(Vector * restrict vector, size_t index)
     return previous;
 }
 
-bool vector_iterate(const Vector * restrict vector, vector_iterator iterator, void *context)
+void vector_clear(Vector *vector)
+{
+    if(NULL == vector)
+    {
+        return;
+    }
+
+    if(0 != vector->length)
+    {
+        memset(vector->items, 0, sizeof(uint8_t *) * vector->length);
+        vector->length = 0;
+    }
+}
+
+bool vector_trim(Vector *vector)
+{
+    if(vector->length == vector->capacity)
+    {
+        return false;
+    }
+
+    uint8_t **cache = vector->items;
+    vector->items = realloc(vector->items, sizeof(void *) * vector->length);
+    if(NULL == vector->items)
+    {
+        vector->items = cache;
+        return false;
+    }
+    vector->capacity = vector->length;
+    return true;
+}
+
+bool vector_iterate(const Vector *vector, vector_iterator iterator, void *context)
 {
     if(NULL == vector || NULL == iterator)
     {
@@ -226,7 +255,7 @@ bool vector_iterate(const Vector * restrict vector, vector_iterator iterator, vo
     return true;
 }
 
-Vector *vector_map(const Vector * restrict vector, vector_map_function function, void *context)
+Vector *vector_map(const Vector *vector, vector_map_function function, void *context)
 {
     if(NULL == vector || NULL == function)
     {
@@ -249,7 +278,7 @@ Vector *vector_map(const Vector * restrict vector, vector_map_function function,
     return target;            
 }
 
-Vector *vector_map_into(const Vector * restrict vector, vector_map_function function, void *context, Vector * restrict target)
+Vector *vector_map_into(const Vector *vector, vector_map_function function, void *context, Vector *target)
 {
     if(NULL == vector || NULL == function || NULL == target)
     {

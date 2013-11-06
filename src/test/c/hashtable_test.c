@@ -62,16 +62,16 @@ static const char * const WORDS [] =
     "camps",
 };
 
-bool compare(void *key1, void *key2);
-hashcode deadbeef(void *key);
-bool compare_int(void *value1, void *value2);
+bool compare(const void *key1, const void *key2);
+hashcode deadbeef(const void *key);
+bool compare_int(const void *value1, const void *value2);
 
-bool compare(void *key1, void *key2)
+bool compare(const void *key1, const void *key2)
 {
     return 0 == strcmp((char *)key1, (char *)key2);
 }
 
-hashcode deadbeef(void *key __attribute__((unused)))
+hashcode deadbeef(const void *key __attribute__((unused)))
 {
     return 0xDEADBEEF;
 }
@@ -116,7 +116,7 @@ END_TEST
 START_TEST(test_contains)
 {
     reset_errno();
-    Hashtable *hashtable = make_hashtable_with_function(compare, string_hash);
+    Hashtable *hashtable = make_hashtable_with_function(compare, shift_add_xor_string_hash);
     assert_noerr();
     assert_not_null(hashtable);
 
@@ -204,7 +204,7 @@ END_TEST
 START_TEST(test_put_get)
 {
     reset_errno();
-    Hashtable *hashtable = make_hashtable_with_function(compare, string_hash);
+    Hashtable *hashtable = make_hashtable_with_function(compare, shift_add_xor_string_hash);
     assert_noerr();
     assert_not_null(hashtable);
 
@@ -230,7 +230,7 @@ END_TEST
 START_TEST(test_put_many)
 {
     reset_errno();
-    Hashtable *hashtable = make_hashtable_with_function(compare, string_hash);
+    Hashtable *hashtable = make_hashtable_with_function(compare, shift_add_xor_string_hash);
     assert_noerr();
     assert_not_null(hashtable);
 
@@ -429,7 +429,7 @@ START_TEST(test_chained_remove_most)
 }
 END_TEST
 
-bool compare_int(void *value1, void *value2)
+bool compare_int(const void *value1, const void *value2)
 {
     return *(uint32_t *)value1 == *(uint32_t *)value2;
 }
