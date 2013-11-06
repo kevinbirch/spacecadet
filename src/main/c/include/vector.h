@@ -38,6 +38,7 @@ typedef struct vector_s Vector;
 
 typedef bool (*vector_iterator)(void *each, void *context);
 typedef bool (*vector_map_function)(void *each, void *context, Vector *target);
+typedef bool (*vector_item_comparitor)(const void *one, const void *two);
 
 Vector *make_vector(void);
 Vector *make_vector_with_capacity(size_t capacity);
@@ -57,6 +58,7 @@ void   *vector_remove(Vector *vector, size_t index);
 void    vector_clear(Vector *vector);
 bool    vector_trim(Vector *vector);
         
+bool    vector_equals(const Vector *one, const Vector *two, vector_item_comparitor comparitor);
 bool    vector_iterate(const Vector *vector, vector_iterator iterator, void *context);
 
 Vector *vector_map(const Vector *vector, vector_map_function function, void *context);

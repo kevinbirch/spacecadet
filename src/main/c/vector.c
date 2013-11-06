@@ -237,6 +237,26 @@ bool vector_trim(Vector *vector)
     return true;
 }
 
+bool vector_equals(const Vector *one, const Vector *two, vector_item_comparitor comparitor)
+{
+    if(one == two)
+    {
+        return true;
+    }
+    if(vector_length(one) != vector_length(two))
+    {
+        return false;
+    }
+    for(size_t i = 0; i < vector_length(one); i++)
+    {
+        if(!comparitor(one->items[i], two->items[i]))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool vector_iterate(const Vector *vector, vector_iterator iterator, void *context)
 {
     if(NULL == vector || NULL == iterator)
