@@ -62,14 +62,8 @@ static const char * const WORDS [] =
     "camps",
 };
 
-bool compare(const void *key1, const void *key2);
 hashcode deadbeef(const void *key);
 bool compare_int(const void *value1, const void *value2);
-
-bool compare(const void *key1, const void *key2)
-{
-    return 0 == strcmp((char *)key1, (char *)key2);
-}
 
 hashcode deadbeef(const void *key __attribute__((unused)))
 {
@@ -79,7 +73,7 @@ hashcode deadbeef(const void *key __attribute__((unused)))
 START_TEST(test_constructor)
 {
     reset_errno();
-    Hashtable *hashtable = make_hashtable(compare);
+    Hashtable *hashtable = make_hashtable(string_comparitor);
     assert_noerr();
     assert_not_null(hashtable);
     assert_true(hashtable_is_mutable(hashtable));
@@ -92,7 +86,7 @@ END_TEST
 START_TEST(test_size)
 {
     reset_errno();
-    Hashtable *hashtable = make_hashtable(compare);
+    Hashtable *hashtable = make_hashtable(string_comparitor);
     assert_noerr();
     assert_not_null(hashtable);
 
@@ -116,7 +110,7 @@ END_TEST
 START_TEST(test_contains)
 {
     reset_errno();
-    Hashtable *hashtable = make_hashtable_with_function(compare, shift_add_xor_string_hash);
+    Hashtable *hashtable = make_hashtable_with_function(string_comparitor, shift_add_xor_string_hash);
     assert_noerr();
     assert_not_null(hashtable);
 
@@ -140,7 +134,7 @@ END_TEST
 START_TEST(test_get_if_absent)
 {
     reset_errno();
-    Hashtable *hashtable = make_hashtable(compare);
+    Hashtable *hashtable = make_hashtable(string_comparitor);
     assert_noerr();
     assert_not_null(hashtable);
 
@@ -168,7 +162,7 @@ END_TEST
 START_TEST(test_get_if_absent_put)
 {
     reset_errno();
-    Hashtable *hashtable = make_hashtable(compare);
+    Hashtable *hashtable = make_hashtable(string_comparitor);
     assert_noerr();
     assert_not_null(hashtable);
 
@@ -204,7 +198,7 @@ END_TEST
 START_TEST(test_put_get)
 {
     reset_errno();
-    Hashtable *hashtable = make_hashtable_with_function(compare, shift_add_xor_string_hash);
+    Hashtable *hashtable = make_hashtable_with_function(string_comparitor, shift_add_xor_string_hash);
     assert_noerr();
     assert_not_null(hashtable);
 
@@ -230,7 +224,7 @@ END_TEST
 START_TEST(test_put_many)
 {
     reset_errno();
-    Hashtable *hashtable = make_hashtable_with_function(compare, shift_add_xor_string_hash);
+    Hashtable *hashtable = make_hashtable_with_function(string_comparitor, shift_add_xor_string_hash);
     assert_noerr();
     assert_not_null(hashtable);
 
@@ -252,7 +246,7 @@ END_TEST
 START_TEST(test_remove)
 {
     reset_errno();
-    Hashtable *hashtable = make_hashtable(compare);
+    Hashtable *hashtable = make_hashtable(string_comparitor);
     assert_noerr();
     assert_not_null(hashtable);
 
@@ -281,7 +275,7 @@ END_TEST
 START_TEST(test_chained_remove_head)
 {
     reset_errno();
-    Hashtable *hashtable = make_hashtable_with_function(compare, deadbeef);
+    Hashtable *hashtable = make_hashtable_with_function(string_comparitor, deadbeef);
     assert_noerr();
     assert_not_null(hashtable);
 
@@ -312,7 +306,7 @@ END_TEST
 START_TEST(test_chained_remove_mid)
 {
     reset_errno();
-    Hashtable *hashtable = make_hashtable_with_function(compare, deadbeef);
+    Hashtable *hashtable = make_hashtable_with_function(string_comparitor, deadbeef);
     assert_noerr();
     assert_not_null(hashtable);
 
@@ -343,7 +337,7 @@ END_TEST
 START_TEST(test_chained_remove_tail)
 {
     reset_errno();
-    Hashtable *hashtable = make_hashtable_with_function(compare, deadbeef);
+    Hashtable *hashtable = make_hashtable_with_function(string_comparitor, deadbeef);
     assert_noerr();
     assert_not_null(hashtable);
 
@@ -374,7 +368,7 @@ END_TEST
 START_TEST(test_chained_remove_all)
 {
     reset_errno();
-    Hashtable *hashtable = make_hashtable_with_function(compare, deadbeef);
+    Hashtable *hashtable = make_hashtable_with_function(string_comparitor, deadbeef);
     assert_noerr();
     assert_not_null(hashtable);
 
@@ -405,7 +399,7 @@ END_TEST
 START_TEST(test_chained_remove_most)
 {
     reset_errno();
-    Hashtable *hashtable = make_hashtable_with_function(compare, deadbeef);
+    Hashtable *hashtable = make_hashtable_with_function(string_comparitor, deadbeef);
     assert_noerr();
     assert_not_null(hashtable);
 
@@ -437,17 +431,17 @@ bool compare_int(const void *value1, const void *value2)
 START_TEST(test_equals)
 {
     reset_errno();
-    Hashtable *hashtable1 = make_hashtable(compare);
+    Hashtable *hashtable1 = make_hashtable(string_comparitor);
     assert_noerr();
     assert_not_null(hashtable1);
 
     reset_errno();
-    Hashtable *hashtable2 = make_hashtable(compare);
+    Hashtable *hashtable2 = make_hashtable(string_comparitor);
     assert_noerr();
     assert_not_null(hashtable2);
 
     reset_errno();
-    Hashtable *hashtable3 = make_hashtable(compare);
+    Hashtable *hashtable3 = make_hashtable(string_comparitor);
     assert_noerr();
     assert_not_null(hashtable3);
 
@@ -477,7 +471,7 @@ END_TEST
 START_TEST(test_copy)
 {
     reset_errno();
-    Hashtable *hashtable1 = make_hashtable(compare);
+    Hashtable *hashtable1 = make_hashtable(string_comparitor);
     assert_noerr();
     assert_not_null(hashtable1);
 
@@ -504,7 +498,7 @@ END_TEST
 START_TEST(test_clear)
 {
     reset_errno();
-    Hashtable *hashtable = make_hashtable(compare);
+    Hashtable *hashtable = make_hashtable(string_comparitor);
     assert_noerr();
     assert_not_null(hashtable);
 
