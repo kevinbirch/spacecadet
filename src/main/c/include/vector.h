@@ -37,9 +37,10 @@
 typedef struct vector_s Vector;
 
 /* Callback Functions */
-typedef bool (*vector_iterator)(void *each, void *context);
-typedef bool (*vector_mapper)(void *each, void *context, Vector *target);
-typedef bool (*vector_comparitor)(const void *one, const void *two);
+typedef bool  (*vector_iterator)(void *each, void *context);
+typedef bool  (*vector_mapper)(void *each, void *context, Vector *target);
+typedef bool  (*vector_comparitor)(const void *one, const void *two);
+typedef void *(*vector_reducer)(const void *one, const void *two, void *context);
 
 /* Constructors */
 Vector *make_vector(void);
@@ -85,11 +86,11 @@ bool    vector_all(const Vector *vector, vector_iterator iterator, void *context
 bool    vector_none(const Vector *vector, vector_iterator iterator, void *context);
 size_t  vector_count(const Vector *vector, vector_iterator iterator, void *context);
 
-/* Comparison */
+/* Comparison API */
 bool    vector_equals(const Vector *one, const Vector *two, vector_comparitor comparitor);
 
-/* Iteration */
+/* Functional API */
 bool    vector_iterate(const Vector *vector, vector_iterator iterator, void *context);
 Vector *vector_map(const Vector *vector, vector_mapper function, void *context);
 Vector *vector_map_into(const Vector *vector, vector_mapper function, void *context, Vector *target);
-
+void   *vector_reduce(const Vector *vector, vector_reducer function, void *context);

@@ -8,7 +8,6 @@
   * `free()` should call clear
 * add murmur3 hash
 * vector
-  * reduce
   * copy
   * with, with_all
   * filter/filter_not

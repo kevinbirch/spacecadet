@@ -219,6 +219,8 @@ void vector_setup(void)
     assert_true(vector_add(vector, (void *)bar));
     assert_noerr();
     assert_vector_length(vector, 2);
+
+    reset_errno();
 }
 
 void vector_teardown(void)
@@ -252,6 +254,13 @@ END_TEST
 START_TEST (first)
 {
     char *result = vector_first(vector);
+    assert_ptr_eq(foo, result);
+}
+END_TEST
+
+START_TEST (head)
+{
+    char *result = vector_head(vector);
     assert_ptr_eq(foo, result);
 }
 END_TEST
@@ -576,6 +585,54 @@ bool fail_transform(void *each __attribute__((unused)), void *context, Vector *t
     }
 }
 
+void *reducer(const void *one, const void *two, void *context);
+void *reducer(const void *one, const void *two, void *context __attribute__((unused)))
+{
+    const char *a = (const char *)one;
+    size_t a_len = strlen(a);
+    const char *b = (const char *)two;
+    size_t b_len = strlen(b);
+    size_t length = a_len + b_len;
+    
+    char *result = calloc(1, length + 1);
+    memcpy(result, a, a_len);
+    memcpy(result + a_len, b, b_len);
+    result[length - 1] = '\0';
+
+    return result;
+}
+
+START_TEST (reduce_emtpy)
+{
+    vector_clear(vector);
+    assert_noerr();
+   
+    assert_null(vector_reduce(vector, reducer, NULL));
+    assert_errno(EINVAL);
+}
+END_TEST
+
+START_TEST (reduce_one)
+{
+    vector_pop(vector);
+    assert_noerr();
+
+    char *result = vector_reduce(vector, reducer, NULL);
+    assert_noerr();
+    assert_not_null(result);
+    assert_ptr_eq(foo, result);    
+}
+END_TEST
+
+START_TEST (reduce)
+{
+    char *result = vector_reduce(vector, reducer, NULL);
+    assert_noerr();
+    assert_not_null(result);
+    assert_buf_eq("foobar", 6, result, strlen(result));
+}
+END_TEST
+
 bool always_true(void *each, void *context);
 bool always_true(void *each __attribute__((unused)), void *context __attribute__((unused)))
 {
@@ -687,33 +744,37 @@ Suite *vector_suite(void)
     tcase_add_test(bad_input_case, bad_map);
     tcase_add_test(bad_input_case, bad_map_into);
     
-    TCase *basic_case = tcase_create("basic");
-    tcase_add_checked_fixture(basic_case, vector_setup, vector_teardown);
-    tcase_add_test(basic_case, ctor_dtor);
-    tcase_add_test(basic_case, get);
-    tcase_add_test(basic_case, first);
-    tcase_add_test(basic_case, last);
+    TCase *element_case = tcase_create("element");
+    tcase_add_checked_fixture(element_case, vector_setup, vector_teardown);
+    tcase_add_test(element_case, ctor_dtor);
+    tcase_add_test(element_case, get);
+    tcase_add_test(element_case, first);
+    tcase_add_test(element_case, head);
+    tcase_add_test(element_case, last);
 
-    TCase *mutate_case = tcase_create("mutate");
-    tcase_add_checked_fixture(mutate_case, vector_setup, vector_teardown);
-    tcase_add_test(mutate_case, add);
-    tcase_add_test(mutate_case, append);
-    tcase_add_test(mutate_case, insert_front);
-    tcase_add_test(mutate_case, insert_mid);
-    tcase_add_test(mutate_case, insert_end);
-    tcase_add_test(mutate_case, prepend);
-    tcase_add_test(mutate_case, set);
-    tcase_add_test(mutate_case, test_remove);
-    tcase_add_test(mutate_case, add_all);
-    tcase_add_test(mutate_case, trim);
-    tcase_add_test(mutate_case, clear);
+    TCase *mutation_case = tcase_create("mutation");
+    tcase_add_checked_fixture(mutation_case, vector_setup, vector_teardown);
+    tcase_add_test(mutation_case, add);
+    tcase_add_test(mutation_case, append);
+    tcase_add_test(mutation_case, insert_front);
+    tcase_add_test(mutation_case, insert_mid);
+    tcase_add_test(mutation_case, insert_end);
+    tcase_add_test(mutation_case, prepend);
+    tcase_add_test(mutation_case, set);
+    tcase_add_test(mutation_case, test_remove);
+    tcase_add_test(mutation_case, add_all);
+    tcase_add_test(mutation_case, trim);
+    tcase_add_test(mutation_case, clear);
 
-    TCase *iterate_case = tcase_create("iterate");
-    tcase_add_checked_fixture(iterate_case, vector_setup, vector_teardown);
-    tcase_add_test(iterate_case, iteration);
-    tcase_add_test(iterate_case, fail_iteration);
-    tcase_add_test(iterate_case, map);
-    tcase_add_test(iterate_case, fail_map);
+    TCase *functional_case = tcase_create("functional");
+    tcase_add_checked_fixture(functional_case, vector_setup, vector_teardown);
+    tcase_add_test(functional_case, iteration);
+    tcase_add_test(functional_case, fail_iteration);
+    tcase_add_test(functional_case, map);
+    tcase_add_test(functional_case, fail_map);
+    tcase_add_test(functional_case, reduce_emtpy);
+    tcase_add_test(functional_case, reduce_one);
+    tcase_add_test(functional_case, reduce);
 
     TCase *search_case = tcase_create("search");
     tcase_add_checked_fixture(search_case, vector_setup, vector_teardown);
@@ -732,9 +793,9 @@ Suite *vector_suite(void)
 
     Suite *suite = suite_create("Vector");
     suite_add_tcase(suite, bad_input_case);
-    suite_add_tcase(suite, basic_case);
-    suite_add_tcase(suite, mutate_case);
-    suite_add_tcase(suite, iterate_case);
+    suite_add_tcase(suite, element_case);
+    suite_add_tcase(suite, mutation_case);
+    suite_add_tcase(suite, functional_case);
     suite_add_tcase(suite, search_case);
     suite_add_tcase(suite, queue_case);
 

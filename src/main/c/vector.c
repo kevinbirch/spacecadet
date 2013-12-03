@@ -301,7 +301,7 @@ void *vector_find(const Vector *vector, vector_iterator iterator, void *context)
         return NULL;
     }
 
-    for(size_t i = 0; i < vector_length(vector); i++)
+    for(size_t i = 0; i < vector->length; i++)
     {
         if(iterator(vector->items[i], context))
         {
@@ -319,7 +319,7 @@ bool vector_contains(const Vector *vector, vector_comparitor comparitor, void *c
         return false;
     }
 
-    for(size_t i = 0; i < vector_length(vector); i++)
+    for(size_t i = 0; i < vector->length; i++)
     {
         if(comparitor(vector->items[i], context))
         {
@@ -337,7 +337,7 @@ bool vector_any(const Vector *vector, vector_iterator iterator, void *context)
         return false;
     }
 
-    for(size_t i = 0; i < vector_length(vector); i++)
+    for(size_t i = 0; i < vector->length; i++)
     {
         if(iterator(vector->items[i], context))
         {
@@ -355,7 +355,7 @@ bool vector_all(const Vector *vector, vector_iterator iterator, void *context)
         return false;
     }
 
-    for(size_t i = 0; i < vector_length(vector); i++)
+    for(size_t i = 0; i < vector->length; i++)
     {
         if(!iterator(vector->items[i], context))
         {
@@ -373,7 +373,7 @@ bool vector_none(const Vector *vector, vector_iterator iterator, void *context)
         return false;
     }
 
-    for(size_t i = 0; i < vector_length(vector); i++)
+    for(size_t i = 0; i < vector->length; i++)
     {
         if(iterator(vector->items[i], context))
         {
@@ -392,7 +392,7 @@ size_t vector_count(const Vector *vector, vector_iterator iterator, void *contex
     }
 
     size_t count = 0;
-    for(size_t i = 0; i < vector_length(vector); i++)
+    for(size_t i = 0; i < vector->length; i++)
     {
         if(iterator(vector->items[i], context))
         {
@@ -430,7 +430,7 @@ bool vector_iterate(const Vector *vector, vector_iterator iterator, void *contex
         return false;
     }
 
-    for(size_t i = 0; i < vector_length(vector); i++)
+    for(size_t i = 0; i < vector->length; i++)
     {
         if(!iterator(vector->items[i], context))
         {
@@ -448,7 +448,7 @@ Vector *vector_map(const Vector *vector, vector_mapper function, void *context)
         return false;
     }
 
-    Vector *target = make_vector_with_capacity(vector_length(vector));
+    Vector *target = make_vector_with_capacity(vector->length);
     if(NULL == target)
     {
         return NULL;
@@ -471,7 +471,7 @@ Vector *vector_map_into(const Vector *vector, vector_mapper function, void *cont
         return false;
     }
 
-    for(size_t i = 0; i < vector_length(vector); i++)
+    for(size_t i = 0; i < vector->length; i++)
     {
         if(!function(vector->items[i], context, target))
         {
@@ -480,6 +480,28 @@ Vector *vector_map_into(const Vector *vector, vector_mapper function, void *cont
     }
 
     return target;
+}
+
+void *vector_reduce(const Vector *vector, vector_reducer function, void *context)
+{
+    if(NULL == vector || NULL == function || vector_is_empty(vector))
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    if(1 == vector->length)
+    {
+        return vector->items[0];
+    }
+
+    void *result = function(vector->items[0], vector->items[1], context);
+    for(size_t i = 2; i < vector->length; i++)
+    {
+        result = function(result, vector->items[i], context);
+    }
+
+    return result;
 }
 
 static inline size_t calculate_new_capacity(size_t capacity)
