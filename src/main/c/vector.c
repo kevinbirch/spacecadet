@@ -132,6 +132,16 @@ void *vector_get(const Vector *vector, size_t index)
     return vector->items[index];
 }
 
+void *vector_first(const Vector *vector)
+{
+    return vector_get(vector, 0);
+}
+
+void   *vector_last(const Vector *vector)
+{
+    return vector_get(vector, vector->length - 1);
+}
+
 bool vector_add(Vector *vector, void *value)
 {
     if(NULL == vector || NULL == value)
@@ -235,6 +245,115 @@ bool vector_trim(Vector *vector)
     }
     vector->capacity = vector->length;
     return true;
+}
+
+void *vector_find(const Vector *vector, vector_iterator iterator, void *context)
+{
+    if(NULL == vector || NULL == iterator)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    for(size_t i = 0; i < vector_length(vector); i++)
+    {
+        if(iterator(vector->items[i], context))
+        {
+            return vector->items[i];
+        }
+    }
+    return NULL;
+}
+
+bool vector_contains(const Vector *vector, vector_item_comparitor comparitor, void *context)
+{
+    if(NULL == vector || NULL == comparitor)
+    {
+        errno = EINVAL;
+        return false;
+    }
+
+    for(size_t i = 0; i < vector_length(vector); i++)
+    {
+        if(comparitor(vector->items[i], context))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool vector_any(const Vector *vector, vector_iterator iterator, void *context)
+{
+    if(NULL == vector || NULL == iterator)
+    {
+        errno = EINVAL;
+        return false;
+    }
+
+    for(size_t i = 0; i < vector_length(vector); i++)
+    {
+        if(iterator(vector->items[i], context))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool vector_all(const Vector *vector, vector_iterator iterator, void *context)
+{
+    if(NULL == vector || NULL == iterator)
+    {
+        errno = EINVAL;
+        return false;
+    }
+
+    for(size_t i = 0; i < vector_length(vector); i++)
+    {
+        if(!iterator(vector->items[i], context))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool vector_none(const Vector *vector, vector_iterator iterator, void *context)
+{
+    if(NULL == vector || NULL == iterator)
+    {
+        errno = EINVAL;
+        return false;
+    }
+
+    for(size_t i = 0; i < vector_length(vector); i++)
+    {
+        if(iterator(vector->items[i], context))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+size_t vector_count(const Vector *vector, vector_iterator iterator, void *context)
+{
+    if(NULL == vector || NULL == iterator)
+    {
+        errno = EINVAL;
+        return 0;
+    }
+
+    size_t count = 0;
+    for(size_t i = 0; i < vector_length(vector); i++)
+    {
+        if(iterator(vector->items[i], context))
+        {
+            count++;
+        }
+    }
+    return count;
 }
 
 bool vector_equals(const Vector *one, const Vector *two, vector_item_comparitor comparitor)

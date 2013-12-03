@@ -2,16 +2,25 @@
 * bad examples: https://bitbucket.org/manvscode/libcollections/src
 * good examples: http://opensource.apple.com/source/CF/
 * marginal examples: http://sourceforge.net/p/c-algorithms/code/ci/master/tree/
+* hashtable
+  * bug: keys are leaked on calls to `remove()`, return key/value pair instead of just value
+  * `clear()` should free keys and values
+  * `free()` should call clear
+* add murmur3 hash
 * vector
-  * reverse
-  * sort
-  * shuffle
-  * sublist
+  * filter/filter_not
+  * remove_if
+  * fold
+  * copy
+  * with?
+  * reverse/reverse_copy
+  * sort/sort_copy
+  * shuffle/shuffle_copy
   * fill,fill_range
-  * slice
   * delete range
-  * find/first,last\_index\_of
-  * contains
+  * sublist
+  * tail
+  * slice
 * set, bloom filter, count min sketch
 * list, dl list
 * string

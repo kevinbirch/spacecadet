@@ -201,22 +201,6 @@ START_TEST (bad_map_into)
     vector_free(empty_vector);
 }
 END_TEST
-    
-START_TEST (ctor_dtor)
-{
-    reset_errno();
-    Vector *empty_vector = make_vector();
-    assert_not_null(empty_vector);
-    assert_noerr();
-
-    assert_vector_length(empty_vector, 0);
-    assert_vector_empty(empty_vector);
-    
-    reset_errno();
-    vector_free(empty_vector);
-    assert_noerr();
-}
-END_TEST
 
 void vector_setup(void)
 {
@@ -241,6 +225,43 @@ void vector_teardown(void)
 {
     vector_free(vector);
 }
+    
+START_TEST (ctor_dtor)
+{
+    reset_errno();
+    Vector *empty_vector = make_vector();
+    assert_not_null(empty_vector);
+    assert_noerr();
+
+    assert_vector_length(empty_vector, 0);
+    assert_vector_empty(empty_vector);
+    
+    reset_errno();
+    vector_free(empty_vector);
+    assert_noerr();
+}
+END_TEST
+
+START_TEST (get)
+{
+    char *result = vector_get(vector, 0);
+    assert_ptr_eq(foo, result);
+}
+END_TEST
+
+START_TEST (first)
+{
+    char *result = vector_first(vector);
+    assert_ptr_eq(foo, result);
+}
+END_TEST
+
+START_TEST (last)
+{
+    char *result = vector_last(vector);
+    assert_ptr_eq(bar, result);
+}
+END_TEST
 
 START_TEST (add)
 {
@@ -473,6 +494,73 @@ bool fail_transform(void *each __attribute__((unused)), void *context, Vector *t
     }
 }
 
+bool always_true(void *each, void *context);
+bool always_true(void *each __attribute__((unused)), void *context __attribute__((unused)))
+{
+    return true;
+}
+
+bool always_false(void *each, void *context);
+bool always_false(void *each __attribute__((unused)), void *context __attribute__((unused)))
+{
+    return false;
+}
+
+START_TEST (find)
+{
+    void *result = vector_find(vector, always_true, NULL);
+    assert_ptr_eq(foo, result);
+}
+END_TEST
+
+
+bool true_comparitor(const void *each, const void *context);
+bool true_comparitor(const void *each __attribute__((unused)), const void *context __attribute__((unused)))
+{
+    return true;
+}
+
+bool false_comparitor(const void *each, const void *context);
+bool false_comparitor(const void *each __attribute__((unused)), const void *context __attribute__((unused)))
+{
+    return false;
+}
+
+START_TEST (contains)
+{
+    assert_true(vector_contains(vector, true_comparitor, NULL));
+    assert_false(vector_contains(vector, false_comparitor, NULL));
+}
+END_TEST
+
+START_TEST (any)
+{
+    assert_true(vector_any(vector, always_true, NULL));    
+    assert_false(vector_any(vector, always_false, NULL));    
+}
+END_TEST
+
+START_TEST (all)
+{
+    assert_true(vector_all(vector, always_true, NULL));
+    assert_false(vector_all(vector, always_false, NULL));
+}
+END_TEST
+
+START_TEST (none)
+{
+    assert_false(vector_none(vector, always_true, NULL));
+    assert_true(vector_none(vector, always_false, NULL));
+}
+END_TEST
+
+START_TEST (count)
+{
+    assert_int_eq(2, vector_count(vector, always_true, NULL));
+    assert_int_eq(0, vector_count(vector, always_false, NULL));
+}
+END_TEST
+
 Suite *vector_suite(void)
 {
     TCase *bad_input_case = tcase_create("bad input");
@@ -486,7 +574,11 @@ Suite *vector_suite(void)
     tcase_add_test(bad_input_case, bad_map_into);
     
     TCase *basic_case = tcase_create("basic");
+    tcase_add_checked_fixture(basic_case, vector_setup, vector_teardown);
     tcase_add_test(basic_case, ctor_dtor);
+    tcase_add_test(basic_case, get);
+    tcase_add_test(basic_case, first);
+    tcase_add_test(basic_case, last);
 
     TCase *mutate_case = tcase_create("mutate");
     tcase_add_checked_fixture(mutate_case, vector_setup, vector_teardown);
@@ -504,11 +596,21 @@ Suite *vector_suite(void)
     tcase_add_test(iterate_case, map);
     tcase_add_test(iterate_case, fail_map);
 
+    TCase *search_case = tcase_create("search");
+    tcase_add_checked_fixture(search_case, vector_setup, vector_teardown);
+    tcase_add_test(search_case, find);
+    tcase_add_test(search_case, contains);
+    tcase_add_test(search_case, any);
+    tcase_add_test(search_case, all);
+    tcase_add_test(search_case, none);
+    tcase_add_test(search_case, count);
+
     Suite *suite = suite_create("Vector");
     suite_add_tcase(suite, bad_input_case);
     suite_add_tcase(suite, basic_case);
     suite_add_tcase(suite, mutate_case);
     suite_add_tcase(suite, iterate_case);
+    suite_add_tcase(suite, search_case);
 
     return suite;
 }
