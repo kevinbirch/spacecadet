@@ -195,7 +195,7 @@ START_TEST (bad_map_into)
     assert_errno(EINVAL);
 
     reset_errno();
-    assert_null(vector_map_into(empty_vector, (vector_map_function)1, NULL, NULL));
+    assert_null(vector_map_into(empty_vector, (vector_mapper)1, NULL, NULL));
     assert_errno(EINVAL);
 
     vector_free(empty_vector);
@@ -274,6 +274,88 @@ START_TEST (add)
 
     char *result = vector_get(vector, 2);
     assert_ptr_eq(baz, result);
+}
+END_TEST
+
+START_TEST (append)
+{
+    char *baz = "baz";
+
+    reset_errno();
+    vector_append(vector, baz);
+    assert_noerr();
+    assert_vector_length(vector, 3);
+
+    char *result = vector_get(vector, 2);
+    assert_ptr_eq(baz, result);
+}
+END_TEST
+
+START_TEST (insert_front)
+{
+    char *baz = "baz";
+
+    reset_errno();
+    vector_insert(vector, baz, 0);
+    assert_noerr();
+    assert_vector_length(vector, 3);
+
+    char *result = vector_get(vector, 0);
+    assert_ptr_eq(baz, result);
+    result = vector_get(vector, 1);
+    assert_ptr_eq(foo, result);
+    result = vector_get(vector, 2);
+    assert_ptr_eq(bar, result);
+}
+END_TEST
+
+START_TEST (insert_mid)
+{
+    char *baz = "baz";
+
+    reset_errno();
+    vector_insert(vector, baz, 1);
+    assert_noerr();
+    assert_vector_length(vector, 3);
+
+    char *result = vector_get(vector, 1);
+    assert_ptr_eq(baz, result);
+    result = vector_get(vector, 0);
+    assert_ptr_eq(foo, result);
+    result = vector_get(vector, 2);
+    assert_ptr_eq(bar, result);
+}
+END_TEST
+
+START_TEST (insert_end)
+{
+    char *baz = "baz";
+
+    reset_errno();
+    vector_insert(vector, baz, vector_length(vector));
+    assert_noerr();
+    assert_vector_length(vector, 3);
+
+    char *result = vector_get(vector, 2);
+    assert_ptr_eq(baz, result);
+}
+END_TEST
+
+START_TEST (prepend)
+{
+    char *baz = "baz";
+
+    reset_errno();
+    vector_prepend(vector, baz);
+    assert_noerr();
+    assert_vector_length(vector, 3);
+
+    char *result = vector_get(vector, 0);
+    assert_ptr_eq(baz, result);
+    result = vector_get(vector, 1);
+    assert_ptr_eq(foo, result);
+    result = vector_get(vector, 2);
+    assert_ptr_eq(bar, result);
 }
 END_TEST
 
@@ -615,6 +697,11 @@ Suite *vector_suite(void)
     TCase *mutate_case = tcase_create("mutate");
     tcase_add_checked_fixture(mutate_case, vector_setup, vector_teardown);
     tcase_add_test(mutate_case, add);
+    tcase_add_test(mutate_case, append);
+    tcase_add_test(mutate_case, insert_front);
+    tcase_add_test(mutate_case, insert_mid);
+    tcase_add_test(mutate_case, insert_end);
+    tcase_add_test(mutate_case, prepend);
     tcase_add_test(mutate_case, set);
     tcase_add_test(mutate_case, test_remove);
     tcase_add_test(mutate_case, add_all);

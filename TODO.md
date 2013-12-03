@@ -8,11 +8,11 @@
   * `free()` should call clear
 * add murmur3 hash
 * vector
+  * reduce
+  * copy
+  * with, with_all
   * filter/filter_not
   * remove_if
-  * fold
-  * copy
-  * with?
   * reverse/reverse_copy
   * sort/sort_copy
   * shuffle/shuffle_copy
@@ -21,6 +21,8 @@
   * sublist
   * tail
   * slice
+  * take, drop
+  * take\_while, drop\_while
 * set, bloom filter, count min sketch
 * list, dl list
 * string

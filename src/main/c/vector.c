@@ -45,6 +45,9 @@ struct vector_s
 };
 
 static inline bool ensure_capacity(Vector *vector, size_t min_capacity);
+static inline size_t calculate_new_capacity(size_t capacity);
+static inline bool reallocate(Vector *vector, size_t capacity);
+
 
 static bool add_to_vector_iterator(void *each, void *context);
 
@@ -180,6 +183,57 @@ bool vector_add_all(Vector *vector, Vector *value)
     return result;
 }
 
+bool vector_insert(Vector *vector, void *value, size_t index)
+{
+    if(NULL == vector || NULL == value || index > vector->length)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    if(vector->length == index)
+    {
+        return vector_add(vector, value);
+    }
+
+    uint8_t **target = vector->items;
+    if(vector->capacity < vector->length + 1)
+    {
+        size_t new_capacity = calculate_new_capacity(vector->capacity);
+        target = calloc(1, sizeof(uint8_t *) * new_capacity);
+        if(NULL == vector->items)
+        {
+            return false;
+        }
+        vector->capacity = new_capacity;
+    }
+
+    if(0 == index)
+    {
+        memmove(target + 1, vector->items, sizeof(uint8_t *) * vector->length);
+        target[0] = value;
+    }
+    else
+    {
+        if(target != vector->items)
+        {
+            memcpy(target, vector->items, sizeof(uint8_t *) * index);
+        }
+        memmove(target + index + 1, vector->items + index, 
+                sizeof(uint8_t *) * (vector->length - index));
+        target[index] = value;
+    }
+
+    if(target != vector->items)
+    {
+        free(vector->items);
+        vector->items = target;
+    }
+    vector->length++;
+
+    return true;
+}
+
 void *vector_set(Vector *vector, void *value, size_t index)
 {                                                                        
     if(NULL == vector || NULL == value || index >= vector->length)
@@ -208,7 +262,7 @@ void *vector_remove(Vector *vector, size_t index)
     }
     else
     {
-        memcpy(vector->items + index, vector->items + index + 1, sizeof(uint8_t *) * (vector->length - (index + 1)));
+        memmove(vector->items + index, vector->items + index + 1, sizeof(uint8_t *) * (vector->length - (index + 1)));
         vector->items[vector->length - 1] = NULL;
     }
     vector->length--;
@@ -235,16 +289,8 @@ bool vector_trim(Vector *vector)
     {
         return false;
     }
-
-    uint8_t **cache = vector->items;
-    vector->items = realloc(vector->items, sizeof(void *) * vector->length);
-    if(NULL == vector->items)
-    {
-        vector->items = cache;
-        return false;
-    }
-    vector->capacity = vector->length;
-    return true;
+    
+    return reallocate(vector, vector->length);
 }
 
 void *vector_find(const Vector *vector, vector_iterator iterator, void *context)
@@ -436,21 +482,30 @@ Vector *vector_map_into(const Vector *vector, vector_mapper function, void *cont
     return target;
 }
 
+static inline size_t calculate_new_capacity(size_t capacity)
+{
+    return (capacity * 3) / 2 + 1;
+}
+
 static inline bool ensure_capacity(Vector *vector, size_t min_capacity)
 {
     if(vector->capacity < min_capacity)
     {
-        size_t new_capacity = (min_capacity * 3) / 2 + 1;
-        uint8_t **cache = vector->items;
-        vector->items = realloc(vector->items, sizeof(void *) * new_capacity);
-        if(NULL == vector->items)
-        {
-            vector->items = cache;
-            return false;
-        }
-        vector->capacity = new_capacity;
+        size_t new_capacity = calculate_new_capacity(min_capacity);
+        return reallocate(vector, new_capacity);
     }
     return true;
 }
 
-
+static inline bool reallocate(Vector *vector, size_t capacity)
+{
+    uint8_t **cache = vector->items;
+    vector->items = realloc(vector->items, sizeof(uint8_t *) * capacity);
+    if(NULL == vector->items)
+    {
+        vector->items = cache;
+        return false;
+    }
+    vector->capacity = capacity;
+    return true;
+}

@@ -61,7 +61,10 @@ void   *vector_last(const Vector *vector);
 
 /* Mutation API */
 bool    vector_add(Vector *vector,  void *value);
+#define vector_append vector_add
 bool    vector_add_all(Vector *vector,  Vector *value);
+bool    vector_insert(Vector *vector, void *value, size_t index);
+#define vector_prepend(VECTOR, VALUE) vector_insert((VECTOR), (VALUE), 0)
 void   *vector_set(Vector *vector, void *value, size_t index);
 
 /* Deletion API */
