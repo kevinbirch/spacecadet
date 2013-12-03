@@ -513,7 +513,6 @@ START_TEST (find)
 }
 END_TEST
 
-
 bool true_comparitor(const void *each, const void *context);
 bool true_comparitor(const void *each __attribute__((unused)), const void *context __attribute__((unused)))
 {
@@ -561,6 +560,39 @@ START_TEST (count)
 }
 END_TEST
 
+START_TEST (peek)
+{
+    void *result = vector_peek(vector);
+    assert_noerr();
+    assert_vector_length(vector, 2);
+    assert_ptr_eq(bar, result);
+}
+END_TEST
+
+START_TEST (push)
+{
+    char *baz = "baz";
+
+    reset_errno();
+    vector_push(vector, baz);
+    assert_noerr();
+    assert_vector_length(vector, 3);
+
+    char *result = vector_get(vector, 2);
+    assert_ptr_eq(baz, result);
+}
+END_TEST
+
+START_TEST (pop)
+{
+    char *value = vector_pop(vector);
+    assert_noerr();
+    assert_vector_length(vector, 1);
+
+    assert_ptr_eq(bar, value);
+}
+END_TEST
+
 Suite *vector_suite(void)
 {
     TCase *bad_input_case = tcase_create("bad input");
@@ -605,12 +637,19 @@ Suite *vector_suite(void)
     tcase_add_test(search_case, none);
     tcase_add_test(search_case, count);
 
+    TCase *queue_case = tcase_create("queue");
+    tcase_add_checked_fixture(queue_case, vector_setup, vector_teardown);
+    tcase_add_test(queue_case, peek);
+    tcase_add_test(queue_case, push);
+    tcase_add_test(queue_case, pop);
+
     Suite *suite = suite_create("Vector");
     suite_add_tcase(suite, bad_input_case);
     suite_add_tcase(suite, basic_case);
     suite_add_tcase(suite, mutate_case);
     suite_add_tcase(suite, iterate_case);
     suite_add_tcase(suite, search_case);
+    suite_add_tcase(suite, queue_case);
 
     return suite;
 }

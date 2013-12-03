@@ -69,6 +69,11 @@ void   *vector_remove(Vector *vector, size_t index);
 void    vector_clear(Vector *vector);
 bool    vector_trim(Vector *vector);
 
+/* Queue API */
+#define vector_peek(VECTOR) vector_get((VECTOR), vector_length((VECTOR)) - 1)
+#define vector_push vector_add
+#define vector_pop(VECTOR) vector_remove((VECTOR), vector_length((VECTOR)) - 1)
+
 /* Search API */
 void   *vector_find(const Vector *vector, vector_iterator iterator, void *context);
 bool    vector_contains(const Vector *vector, vector_item_comparitor comparitor, void *context);
