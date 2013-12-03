@@ -45,6 +45,7 @@ typedef void *(*vector_reducer)(const void *one, const void *two, void *context)
 /* Constructors */
 Vector *make_vector(void);
 Vector *make_vector_with_capacity(size_t capacity);
+Vector *vector_copy(const Vector *vector);
 
 /* Destructor */
 void    vector_free(Vector *value);

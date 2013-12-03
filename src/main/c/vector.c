@@ -76,6 +76,15 @@ Vector *make_vector_with_capacity(size_t capacity)
     return result;
 }
 
+Vector *vector_copy(const Vector *vector)
+{
+    Vector *result = make_vector_with_capacity(vector->length);
+    memcpy(result->items, vector->items, sizeof(uint8_t *) * vector->length);
+    result->length = vector->length;
+
+    return result;
+}
+
 void vector_free(Vector *vector)
 {
     if(NULL == vector)

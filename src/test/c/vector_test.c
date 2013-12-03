@@ -244,6 +244,20 @@ START_TEST (ctor_dtor)
 }
 END_TEST
 
+START_TEST (copy)
+{
+    Vector *copy = vector_copy(vector);
+    assert_not_null(copy);
+    assert_noerr();
+    assert_false(vector_is_empty(copy));
+    assert_int_eq(vector_length(vector), vector_length(copy));
+    assert_int_eq(vector_capacity(vector), vector_capacity(copy));
+    
+    assert_ptr_eq(foo, vector_get(copy, 0));
+    assert_ptr_eq(bar, vector_get(copy, 1));
+}
+END_TEST
+
 START_TEST (get)
 {
     char *result = vector_get(vector, 0);
@@ -747,6 +761,7 @@ Suite *vector_suite(void)
     TCase *element_case = tcase_create("element");
     tcase_add_checked_fixture(element_case, vector_setup, vector_teardown);
     tcase_add_test(element_case, ctor_dtor);
+    tcase_add_test(element_case, copy);
     tcase_add_test(element_case, get);
     tcase_add_test(element_case, first);
     tcase_add_test(element_case, head);
