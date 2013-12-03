@@ -45,7 +45,10 @@ typedef void *(*vector_reducer)(const void *one, const void *two, void *context)
 /* Constructors */
 Vector *make_vector(void);
 Vector *make_vector_with_capacity(size_t capacity);
+Vector *make_vector_of(size_t count, ...);
 Vector *vector_copy(const Vector *vector);
+Vector *vector_with(const Vector *vector, void *value);
+Vector *vector_with_all(const Vector *vector, const Vector *from);
 
 /* Destructor */
 void    vector_free(Vector *value);
@@ -62,9 +65,9 @@ void   *vector_first(const Vector *vector);
 void   *vector_last(const Vector *vector);
 
 /* Mutation API */
-bool    vector_add(Vector *vector,  void *value);
+bool    vector_add(Vector *vector, void *value);
 #define vector_append vector_add
-bool    vector_add_all(Vector *vector,  Vector *value);
+bool    vector_add_all(Vector *vector, const Vector *value);
 bool    vector_insert(Vector *vector, void *value, size_t index);
 #define vector_prepend(VECTOR, VALUE) vector_insert((VECTOR), (VALUE), 0)
 void   *vector_set(Vector *vector, void *value, size_t index);

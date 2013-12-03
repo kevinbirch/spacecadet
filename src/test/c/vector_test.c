@@ -205,19 +205,10 @@ END_TEST
 void vector_setup(void)
 {
     reset_errno();
-    vector = make_vector_with_capacity(2);
+    vector = make_vector_of(2, foo, bar);
     assert_noerr();
     assert_not_null(vector);
     assert_int_eq(2, vector_capacity(vector));
-
-    reset_errno();
-    assert_true(vector_add(vector, (void *)foo));
-    assert_noerr();
-    assert_vector_length(vector, 1);
-
-    reset_errno();
-    assert_true(vector_add(vector, (void *)bar));
-    assert_noerr();
     assert_vector_length(vector, 2);
 
     reset_errno();
@@ -247,14 +238,54 @@ END_TEST
 START_TEST (copy)
 {
     Vector *copy = vector_copy(vector);
-    assert_not_null(copy);
     assert_noerr();
+    assert_not_null(copy);
     assert_false(vector_is_empty(copy));
-    assert_int_eq(vector_length(vector), vector_length(copy));
+    assert_vector_length(vector, vector_length(copy));
     assert_int_eq(vector_capacity(vector), vector_capacity(copy));
     
     assert_ptr_eq(foo, vector_get(copy, 0));
     assert_ptr_eq(bar, vector_get(copy, 1));
+}
+END_TEST
+
+START_TEST (with)
+{
+    char *baz = "baz";
+
+    Vector *copy = vector_with(vector, baz);
+    assert_noerr();
+    assert_not_null(copy);
+    assert_vector_length(copy, 3);
+    assert_ptr_ne(vector, copy);
+
+    assert_ptr_eq(foo, vector_get(copy, 0));
+    assert_ptr_eq(bar, vector_get(copy, 1));
+    assert_ptr_eq(baz, vector_get(copy, 2));
+}
+END_TEST
+
+START_TEST (with_all)
+{
+    char *baz = "baz";
+    char *quaz = "quaz";
+
+    Vector *other = make_vector_of(2, baz, quaz);
+    assert_noerr();
+    assert_not_null(other);
+    assert_vector_length(other, 2);
+
+    Vector *copy = vector_with_all(vector, other);
+    assert_noerr();
+    assert_not_null(copy);
+    assert_vector_length(copy, 4);
+    assert_ptr_ne(vector, copy);
+    assert_ptr_ne(other, copy);
+
+    assert_ptr_eq(foo, vector_get(copy, 0));
+    assert_ptr_eq(bar, vector_get(copy, 1));
+    assert_ptr_eq(baz, vector_get(copy, 2));
+    assert_ptr_eq(quaz, vector_get(copy, 3));
 }
 END_TEST
 
@@ -761,6 +792,8 @@ Suite *vector_suite(void)
     TCase *element_case = tcase_create("element");
     tcase_add_checked_fixture(element_case, vector_setup, vector_teardown);
     tcase_add_test(element_case, ctor_dtor);
+    tcase_add_test(element_case, with);
+    tcase_add_test(element_case, with_all);
     tcase_add_test(element_case, copy);
     tcase_add_test(element_case, get);
     tcase_add_test(element_case, first);

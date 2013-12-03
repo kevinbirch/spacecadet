@@ -8,7 +8,6 @@
   * `free()` should call clear
 * add murmur3 hash
 * vector
-  * with, with_all
   * filter/filter_not
   * remove_if
   * reverse/reverse_copy
@@ -21,6 +20,8 @@
   * slice
   * take, drop
   * take\_while, drop\_while
+  * with_values?
+  * add_values?
 * set, bloom filter, count min sketch
 * list, dl list
 * string

@@ -19,6 +19,7 @@
 #define assert_uint_ge(X, Y)  ck_assert_uint_ge(X, Y)
 
 #define assert_ptr_eq(X, Y)  ck_assert_msg((X) == (Y), "Assertion '" #X " == " #Y "' failed: "#X"==%p, "#Y"==%p", (X), (Y))
+#define assert_ptr_ne(X, Y)  ck_assert_msg((X) != (Y), "Assertion '" #X " != " #Y "' failed: "#X"==%p, "#Y"==%p", (X), (Y))
 
 #define assert_null(X)              ck_assert_msg((X) == NULL, "Assertion '"#X" == NULL' failed")
 #define assert_not_null(X)          ck_assert_msg((X) != NULL, "Assertion '"#X" != NULL' failed")

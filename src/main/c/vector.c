@@ -30,8 +30,9 @@
  */
 
 #include <stdint.h>
-#include <errno.h>
+#include <stdarg.h>
 #include <string.h>
+#include <errno.h>
 
 #include "vector.h"
 
@@ -58,6 +59,11 @@ Vector *make_vector(void)
 
 Vector *make_vector_with_capacity(size_t capacity)
 {
+    if(0 == capacity)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
     Vector *result = (Vector *)calloc(1, sizeof(Vector));
     if(NULL == result)
     {
@@ -76,11 +82,80 @@ Vector *make_vector_with_capacity(size_t capacity)
     return result;
 }
 
+Vector *make_vector_of(size_t count, ...)
+{
+    Vector *result = make_vector_with_capacity(count);
+    if(NULL == result)
+    {
+        return NULL;
+    }
+
+    va_list rest;
+    va_start(rest, count);
+    for(size_t i = 0; i < count; i++)
+    {
+        void *element = va_arg(rest, void *);
+        result->items[i] = element;
+    }
+    va_end(rest);
+    result->length = count;
+
+    return result;
+}
+
 Vector *vector_copy(const Vector *vector)
 {
+    if(NULL == vector)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+
     Vector *result = make_vector_with_capacity(vector->length);
+    if(NULL == result)
+    {
+        return NULL;
+    }
     memcpy(result->items, vector->items, sizeof(uint8_t *) * vector->length);
     result->length = vector->length;
+
+    return result;
+}
+
+Vector *vector_with(const Vector *vector, void *value)
+{
+    if(NULL == vector || NULL == value)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    Vector *result = vector_copy(vector);
+    if(NULL == result)
+    {
+        return NULL;
+    }
+
+    vector_add(result, value);
+
+    return result;
+}
+
+Vector *vector_with_all(const Vector *vector, const Vector *from)
+{
+    if(NULL == vector || NULL == from)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    Vector *result = vector_copy(vector);
+    if(NULL == result)
+    {
+        return NULL;
+    }
+
+    vector_add_all(result, from);
 
     return result;
 }
@@ -176,20 +251,20 @@ static bool add_to_vector_iterator(void *each, void *context)
     return vector_add(vector, each);
 }
 
-bool vector_add_all(Vector *vector, Vector *value)
+bool vector_add_all(Vector *vector, const Vector *from)
 {
-    if(NULL == vector || NULL == value)
+    if(NULL == vector || NULL == from)
     {
         errno = EINVAL;
         return false;
     }
 
-    if(!ensure_capacity(vector, vector->length + value->length))
+    if(!ensure_capacity(vector, vector->length + from->length))
     {
         return false;
     }
-    bool result = vector_iterate(value, add_to_vector_iterator, vector);
-    return result;
+
+    return vector_iterate(from, add_to_vector_iterator, vector);
 }
 
 bool vector_insert(Vector *vector, void *value, size_t index)
