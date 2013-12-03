@@ -36,10 +36,10 @@
 
 typedef struct vector_s Vector;
 
-/* Iteration Functions */
+/* Callback Functions */
 typedef bool (*vector_iterator)(void *each, void *context);
-typedef bool (*vector_map_function)(void *each, void *context, Vector *target);
-typedef bool (*vector_item_comparitor)(const void *one, const void *two);
+typedef bool (*vector_mapper)(void *each, void *context, Vector *target);
+typedef bool (*vector_comparitor)(const void *one, const void *two);
 
 /* Constructors */
 Vector *make_vector(void);
@@ -76,17 +76,17 @@ bool    vector_trim(Vector *vector);
 
 /* Search API */
 void   *vector_find(const Vector *vector, vector_iterator iterator, void *context);
-bool    vector_contains(const Vector *vector, vector_item_comparitor comparitor, void *context);
+bool    vector_contains(const Vector *vector, vector_comparitor comparitor, void *context);
 bool    vector_any(const Vector *vector, vector_iterator iterator, void *context);
 bool    vector_all(const Vector *vector, vector_iterator iterator, void *context);
 bool    vector_none(const Vector *vector, vector_iterator iterator, void *context);
 size_t  vector_count(const Vector *vector, vector_iterator iterator, void *context);
 
 /* Comparison */
-bool    vector_equals(const Vector *one, const Vector *two, vector_item_comparitor comparitor);
+bool    vector_equals(const Vector *one, const Vector *two, vector_comparitor comparitor);
 
 /* Iteration */
 bool    vector_iterate(const Vector *vector, vector_iterator iterator, void *context);
-Vector *vector_map(const Vector *vector, vector_map_function function, void *context);
-Vector *vector_map_into(const Vector *vector, vector_map_function function, void *context, Vector *target);
+Vector *vector_map(const Vector *vector, vector_mapper function, void *context);
+Vector *vector_map_into(const Vector *vector, vector_mapper function, void *context, Vector *target);
 
