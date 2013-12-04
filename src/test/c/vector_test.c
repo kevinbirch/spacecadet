@@ -762,9 +762,9 @@ bool false_comparitor(const void *each __attribute__((unused)), const void *cont
 
 START_TEST (contains)
 {
-    assert_true(vector_contains(vector, true_comparitor, NULL));
+    assert_true(vector_contains(vector, true_comparitor, (void *)foo));
     assert_noerr();
-    assert_false(vector_contains(vector, false_comparitor, NULL));
+    assert_false(vector_contains(vector, false_comparitor, (void *)foo));
     assert_noerr();
 }
 END_TEST
