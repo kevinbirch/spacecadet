@@ -246,6 +246,8 @@ START_TEST (copy)
     
     assert_ptr_eq(foo, vector_get(copy, 0));
     assert_ptr_eq(bar, vector_get(copy, 1));
+
+    vector_free(copy);
 }
 END_TEST
 
@@ -262,6 +264,8 @@ START_TEST (with)
     assert_ptr_eq(foo, vector_get(copy, 0));
     assert_ptr_eq(bar, vector_get(copy, 1));
     assert_ptr_eq(baz, vector_get(copy, 2));
+
+    vector_free(copy);
 }
 END_TEST
 
@@ -286,6 +290,9 @@ START_TEST (with_all)
     assert_ptr_eq(bar, vector_get(copy, 1));
     assert_ptr_eq(baz, vector_get(copy, 2));
     assert_ptr_eq(quaz, vector_get(copy, 3));
+
+    vector_free(copy);
+    vector_free(other);
 }
 END_TEST
 
@@ -445,6 +452,12 @@ START_TEST (test_remove)
 }
 END_TEST
 
+START_TEST (remove_if)
+{
+    
+}
+END_TEST
+
 START_TEST(clear)
 {
     reset_errno();
@@ -504,27 +517,17 @@ START_TEST (add_all)
     char *quaz = "quaz";
 
     reset_errno();
-    Vector *other_vector = make_vector_with_capacity(2);
+    Vector *other = make_vector_of(2, baz, quaz);
     assert_noerr();
-    assert_not_null(other_vector);
+    assert_not_null(other);
+    assert_vector_length(other, 2);
 
     reset_errno();
-    assert_true(vector_add(other_vector, baz));
-    assert_noerr();
-    assert_vector_length(other_vector, 1);
-
-    reset_errno();
-    assert_true(vector_add(other_vector, quaz));
-    assert_noerr();
-    assert_vector_length(other_vector, 2);
-
-    reset_errno();
-    assert_true(vector_add_all(vector, other_vector));
+    assert_true(vector_add_all(vector, other));
     assert_noerr();
     assert_vector_length(vector, 4);
-    assert_vector_length(other_vector, 2);
     
-    vector_free(other_vector);
+    vector_free(other);
 }
 END_TEST
 
@@ -613,6 +616,8 @@ START_TEST (fail_map)
     assert_not_null(vector);
     assert_noerr();
     assert_uint_eq(1, count);
+
+    vector_free(result);
 }
 END_TEST
 
@@ -629,6 +634,127 @@ bool fail_transform(void *each __attribute__((unused)), void *context, Vector *t
         return vector_add(target, "munky");
     }
 }
+
+bool always_true(void *each, void *context);
+bool always_true(void *each __attribute__((unused)), void *context __attribute__((unused)))
+{
+    return true;
+}
+
+bool always_false(void *each, void *context);
+bool always_false(void *each __attribute__((unused)), void *context __attribute__((unused)))
+{
+    return false;
+}
+
+START_TEST (filter)
+{
+    reset_errno();
+    Vector *true_result = vector_filter(vector, always_true, NULL);
+    assert_noerr();
+    assert_not_null(vector);
+    assert_ptr_ne(vector, true_result);
+    assert_vector_length(true_result, 2);
+    vector_free(true_result);
+
+    reset_errno();
+    Vector *false_result = vector_filter(vector, always_false, NULL);
+    assert_noerr();
+    assert_not_null(vector);
+    assert_ptr_ne(vector, false_result);
+    assert_vector_empty(false_result);
+    vector_free(false_result);
+}
+END_TEST
+
+START_TEST (filter_not)
+{
+    reset_errno();
+    Vector *true_result = vector_filter_not(vector, always_true, NULL);
+    assert_noerr();
+    assert_not_null(vector);
+    assert_ptr_ne(vector, true_result);
+    assert_vector_empty(true_result);
+    vector_free(true_result);
+
+    reset_errno();
+    Vector *false_result = vector_filter_not(vector, always_false, NULL);
+    assert_noerr();
+    assert_not_null(vector);
+    assert_ptr_ne(vector, false_result);
+    assert_vector_length(false_result, 2);
+    vector_free(false_result);
+}
+END_TEST
+
+START_TEST (find)
+{
+    void *result = vector_find(vector, always_true, NULL);
+    assert_noerr();
+    assert_not_null(vector);
+    assert_ptr_eq(foo, result);
+
+    assert_null(vector_find(vector, always_false, NULL));
+    assert_noerr();
+}
+END_TEST
+
+START_TEST (any)
+{
+    assert_true(vector_any(vector, always_true, NULL));    
+    assert_noerr();
+    assert_false(vector_any(vector, always_false, NULL));    
+    assert_noerr();
+}
+END_TEST
+
+START_TEST (all)
+{
+    assert_true(vector_all(vector, always_true, NULL));
+    assert_noerr();
+    assert_false(vector_all(vector, always_false, NULL));
+    assert_noerr();
+}
+END_TEST
+
+START_TEST (none)
+{
+    assert_false(vector_none(vector, always_true, NULL));
+    assert_noerr();
+    assert_true(vector_none(vector, always_false, NULL));
+    assert_noerr();
+}
+END_TEST
+
+START_TEST (count)
+{
+    assert_int_eq(2, vector_count(vector, always_true, NULL));
+    assert_noerr();
+    assert_int_eq(0, vector_count(vector, always_false, NULL));
+    assert_noerr();
+}
+END_TEST
+
+bool true_comparitor(const void *each, const void *context);
+bool true_comparitor(const void *each __attribute__((unused)), const void *context __attribute__((unused)))
+{
+    return true;
+}
+
+bool false_comparitor(const void *each, const void *context);
+bool false_comparitor(const void *each __attribute__((unused)), const void *context __attribute__((unused)))
+{
+    return false;
+}
+
+START_TEST (contains)
+{
+    assert_true(vector_contains(vector, true_comparitor, NULL));
+    assert_noerr();
+    assert_false(vector_contains(vector, false_comparitor, NULL));
+    assert_noerr();
+}
+END_TEST
 
 void *reducer(const void *one, const void *two, void *context);
 void *reducer(const void *one, const void *two, void *context __attribute__((unused)))
@@ -675,72 +801,6 @@ START_TEST (reduce)
     assert_noerr();
     assert_not_null(result);
     assert_buf_eq("foobar", 6, result, strlen(result));
-}
-END_TEST
-
-bool always_true(void *each, void *context);
-bool always_true(void *each __attribute__((unused)), void *context __attribute__((unused)))
-{
-    return true;
-}
-
-bool always_false(void *each, void *context);
-bool always_false(void *each __attribute__((unused)), void *context __attribute__((unused)))
-{
-    return false;
-}
-
-START_TEST (find)
-{
-    void *result = vector_find(vector, always_true, NULL);
-    assert_ptr_eq(foo, result);
-}
-END_TEST
-
-bool true_comparitor(const void *each, const void *context);
-bool true_comparitor(const void *each __attribute__((unused)), const void *context __attribute__((unused)))
-{
-    return true;
-}
-
-bool false_comparitor(const void *each, const void *context);
-bool false_comparitor(const void *each __attribute__((unused)), const void *context __attribute__((unused)))
-{
-    return false;
-}
-
-START_TEST (contains)
-{
-    assert_true(vector_contains(vector, true_comparitor, NULL));
-    assert_false(vector_contains(vector, false_comparitor, NULL));
-}
-END_TEST
-
-START_TEST (any)
-{
-    assert_true(vector_any(vector, always_true, NULL));    
-    assert_false(vector_any(vector, always_false, NULL));    
-}
-END_TEST
-
-START_TEST (all)
-{
-    assert_true(vector_all(vector, always_true, NULL));
-    assert_false(vector_all(vector, always_false, NULL));
-}
-END_TEST
-
-START_TEST (none)
-{
-    assert_false(vector_none(vector, always_true, NULL));
-    assert_true(vector_none(vector, always_false, NULL));
-}
-END_TEST
-
-START_TEST (count)
-{
-    assert_int_eq(2, vector_count(vector, always_true, NULL));
-    assert_int_eq(0, vector_count(vector, always_false, NULL));
 }
 END_TEST
 
@@ -813,6 +873,7 @@ Suite *vector_suite(void)
     tcase_add_test(mutation_case, add_all);
     tcase_add_test(mutation_case, trim);
     tcase_add_test(mutation_case, clear);
+    tcase_add_test(mutation_case, remove_if);
 
     TCase *functional_case = tcase_create("functional");
     tcase_add_checked_fixture(functional_case, vector_setup, vector_teardown);
@@ -823,6 +884,8 @@ Suite *vector_suite(void)
     tcase_add_test(functional_case, reduce_emtpy);
     tcase_add_test(functional_case, reduce_one);
     tcase_add_test(functional_case, reduce);
+    tcase_add_test(functional_case, filter);
+    tcase_add_test(functional_case, filter_not);
 
     TCase *search_case = tcase_create("search");
     tcase_add_checked_fixture(search_case, vector_setup, vector_teardown);

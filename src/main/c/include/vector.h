@@ -98,3 +98,5 @@ bool    vector_iterate(const Vector *vector, vector_iterator iterator, void *con
 Vector *vector_map(const Vector *vector, vector_mapper function, void *context);
 Vector *vector_map_into(const Vector *vector, vector_mapper function, void *context, Vector *target);
 void   *vector_reduce(const Vector *vector, vector_reducer function, void *context);
+Vector *vector_filter(const Vector *vector, vector_iterator function, void *context);
+Vector *vector_filter_not(const Vector *vector, vector_iterator function, void *context);

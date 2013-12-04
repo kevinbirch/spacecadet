@@ -588,6 +588,64 @@ void *vector_reduce(const Vector *vector, vector_reducer function, void *context
     return result;
 }
 
+Vector *vector_filter(const Vector *vector, vector_iterator function, void *context)
+{
+    if(NULL == vector || NULL == function)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    if(vector_is_empty(vector))
+    {
+        return make_vector();
+    }
+
+    Vector *result = make_vector_with_capacity(vector->length);
+    if(NULL == result)
+    {
+        return NULL;
+    }
+    for(size_t i = 0; i < vector->length; i++)
+    {
+        if(function(vector->items[i], context))
+        {
+            result->items[result->length++] = vector->items[i];
+        }
+    }
+
+    return result;
+}
+
+Vector *vector_filter_not(const Vector *vector, vector_iterator function, void *context)
+{
+    if(NULL == vector || NULL == function)
+    {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    if(vector_is_empty(vector))
+    {
+        return make_vector();
+    }
+
+    Vector *result = make_vector_with_capacity(vector->length);
+    if(NULL == result)
+    {
+        return NULL;
+    }
+    for(size_t i = 0; i < vector->length; i++)
+    {
+        if(!function(vector->items[i], context))
+        {
+            result->items[result->length++] = vector->items[i];
+        }
+    }
+
+    return result;
+}
+
 static inline size_t calculate_new_capacity(size_t capacity)
 {
     return (capacity * 3) / 2 + 1;

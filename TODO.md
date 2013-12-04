@@ -8,8 +8,6 @@
   * `free()` should call clear
 * add murmur3 hash
 * vector
-  * filter/filter_not
-  * remove_if
   * reverse/reverse_copy
   * sort/sort_copy
   * shuffle/shuffle_copy
