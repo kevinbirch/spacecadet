@@ -452,9 +452,22 @@ START_TEST (test_remove)
 }
 END_TEST
 
-START_TEST (remove_if)
+bool string_compare(const void *one, const void *two);
+bool string_compare(const void *one, const void *two)
 {
-    
+    return 0 == strncmp((const char *)one, (const char *)two, 3ul);
+}
+
+START_TEST (remove_item)
+{
+    assert_true(vector_remove_item(vector, string_compare, (void *)foo));
+    assert_noerr();
+    assert_vector_length(vector, 1);
+
+    char *result = vector_get(vector, 0);
+    assert_noerr();
+    assert_not_null(result);
+    assert_ptr_eq(bar, result);
 }
 END_TEST
 
@@ -873,7 +886,7 @@ Suite *vector_suite(void)
     tcase_add_test(mutation_case, add_all);
     tcase_add_test(mutation_case, trim);
     tcase_add_test(mutation_case, clear);
-    tcase_add_test(mutation_case, remove_if);
+    tcase_add_test(mutation_case, remove_item);
 
     TCase *functional_case = tcase_create("functional");
     tcase_add_checked_fixture(functional_case, vector_setup, vector_teardown);

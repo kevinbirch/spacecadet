@@ -74,6 +74,7 @@ void   *vector_set(Vector *vector, void *value, size_t index);
 
 /* Deletion API */
 void   *vector_remove(Vector *vector, size_t index);
+bool    vector_remove_item(Vector *vector, vector_comparitor comparitor, void *item);
 void    vector_clear(Vector *vector);
 bool    vector_trim(Vector *vector);
 
@@ -84,7 +85,7 @@ bool    vector_trim(Vector *vector);
 
 /* Search API */
 void   *vector_find(const Vector *vector, vector_iterator iterator, void *context);
-bool    vector_contains(const Vector *vector, vector_comparitor comparitor, void *context);
+bool    vector_contains(const Vector *vector, vector_comparitor comparitor, void *item);
 bool    vector_any(const Vector *vector, vector_iterator iterator, void *context);
 bool    vector_all(const Vector *vector, vector_iterator iterator, void *context);
 bool    vector_none(const Vector *vector, vector_iterator iterator, void *context);

@@ -353,6 +353,24 @@ void *vector_remove(Vector *vector, size_t index)
     return previous;
 }
 
+bool vector_remove_item(Vector *vector, vector_comparitor comparitor, void *item)
+{
+    if(NULL == vector || NULL == comparitor)
+    {
+        errno = EINVAL;
+        return false;
+    }
+
+    for(size_t i = 0; i < vector->length; i++)
+    {
+        if(comparitor(vector->items[i], item))
+        {
+            return NULL != vector_remove(vector, i);
+        }
+    }
+    return false;
+}
+
 void vector_clear(Vector *vector)
 {
     if(NULL == vector)
@@ -395,7 +413,7 @@ void *vector_find(const Vector *vector, vector_iterator iterator, void *context)
     return NULL;
 }
 
-bool vector_contains(const Vector *vector, vector_comparitor comparitor, void *context)
+bool vector_contains(const Vector *vector, vector_comparitor comparitor, void *item)
 {
     if(NULL == vector || NULL == comparitor)
     {
@@ -405,7 +423,7 @@ bool vector_contains(const Vector *vector, vector_comparitor comparitor, void *c
 
     for(size_t i = 0; i < vector->length; i++)
     {
-        if(comparitor(vector->items[i], context))
+        if(comparitor(vector->items[i], item))
         {
             return true;
         }
