@@ -1,6 +1,6 @@
 # Space Cadet
 
-A colletion of data structures and algorithms in C.
+A collection of data structures and algorithms in C.
 
 ## Collections
 
