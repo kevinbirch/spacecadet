@@ -29,7 +29,7 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
-#include <math.h>
+#include <tgmath.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
@@ -165,11 +165,15 @@ Hashtable *make_hashtable_with_capacity_factor_function(compare_function compari
 
 static inline size_t normalize_capacity(size_t hint)
 {
+    if(DEFAULT_CAPACITY > hint)
+    {
+        return DEFAULT_CAPACITY;
+    }
     size_t capacity = hint;
     if(0 != (capacity & (capacity - 1)))
     {
         // ensure that capacity is a power of 2
-        capacity = 1ULL << (size_t)(log2(capacity - 1) + 1);
+        capacity = 1ULL << (size_t)(log2((float)(capacity - 1)) + 1);
     }
     return capacity;
 }
@@ -205,7 +209,7 @@ static void init(Hashtable *hashtable,
                  hash_function function)
 {
     hashtable->occupied = 0ul;
-    hashtable->capacity = (size_t)lroundf(capacity * load_factor);
+    hashtable->capacity = (size_t)lround((float)capacity * load_factor);
     hashtable->load_factor = load_factor;
     hashtable->mutable = true;
     hashtable->length = capacity << 1;
@@ -779,7 +783,7 @@ bool hashtable_iterate_values(const Hashtable *hashtable, hashtable_item_iterato
 static inline size_t hash_index(const Hashtable *hashtable, const void * key)
 {
     hashcode h = hashtable->hash(key);
-    return (h & (hashtable->length >> 1) - 1) << 1;
+    return (h & ((hashtable->length >> 1) - 1)) << 1;
 }
 
 static void rehash(Hashtable *hashtable)
@@ -845,7 +849,7 @@ void hashtable_summary(const Hashtable *hashtable, FILE *stream)
                 min = chain->length;
             }
             total += chain->length;
-            avg = total / count;
+            avg = (float)total / (float)count;
         }
         else if(NULL != hashtable->entries[i])
         {
