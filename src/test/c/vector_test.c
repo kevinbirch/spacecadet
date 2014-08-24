@@ -1,14 +1,14 @@
 /*
  * 金棒 (kanabō)
  * Copyright (c) 2012 Kevin Birch <kmb@pobox.com>.  All rights reserved.
- * 
+ *
  * 金棒 is a tool to bludgeon YAML and JSON files from the shell: the strong
  * made stronger.
  *
  * For more information, consult the README file in the project root.
  *
  * Distributed under an [MIT-style][license] license.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal with
  * the Software without restriction, including without limitation the rights to
@@ -159,7 +159,7 @@ START_TEST (bad_iterate)
     vector_free(empty_vector);
 }
 END_TEST
-    
+
 START_TEST (bad_map)
 {
     reset_errno();
@@ -178,7 +178,7 @@ START_TEST (bad_map)
     vector_free(empty_vector);
 }
 END_TEST
-    
+
 START_TEST (bad_map_into)
 {
     reset_errno();
@@ -202,6 +202,36 @@ START_TEST (bad_map_into)
 }
 END_TEST
 
+START_TEST (bad_peek)
+{
+    reset_errno();
+    Vector *empty_vector = make_vector();
+    assert_not_null(empty_vector);
+    assert_noerr();
+
+    reset_errno();
+    assert_null(vector_peek(empty_vector));
+    assert_errno(EINVAL);
+
+    vector_free(empty_vector);
+}
+END_TEST
+
+START_TEST (bad_pop)
+{
+    reset_errno();
+    Vector *empty_vector = make_vector();
+    assert_not_null(empty_vector);
+    assert_noerr();
+
+    reset_errno();
+    assert_null(vector_pop(empty_vector));
+    assert_errno(EINVAL);
+
+    vector_free(empty_vector);
+}
+END_TEST
+
 void vector_setup(void)
 {
     reset_errno();
@@ -218,7 +248,7 @@ void vector_teardown(void)
 {
     vector_free(vector);
 }
-    
+
 START_TEST (ctor_dtor)
 {
     reset_errno();
@@ -228,7 +258,7 @@ START_TEST (ctor_dtor)
 
     assert_vector_length(empty_vector, 0);
     assert_vector_empty(empty_vector);
-    
+
     reset_errno();
     vector_free(empty_vector);
     assert_noerr();
@@ -243,7 +273,7 @@ START_TEST (copy)
     assert_false(vector_is_empty(copy));
     assert_vector_length(vector, vector_length(copy));
     assert_int_eq(vector_capacity(vector), vector_capacity(copy));
-    
+
     assert_ptr_eq(foo, vector_get(copy, 0));
     assert_ptr_eq(bar, vector_get(copy, 1));
 
@@ -503,7 +533,6 @@ START_TEST (trim)
     assert_noerr();
     assert_vector_length(vector, 2);
 
-    
     reset_errno();
     assert_true(vector_trim(vector));
     assert_noerr();
@@ -539,7 +568,7 @@ START_TEST (add_all)
     assert_true(vector_add_all(vector, other));
     assert_noerr();
     assert_vector_length(vector, 4);
-    
+
     vector_free(other);
 }
 END_TEST
@@ -714,9 +743,9 @@ END_TEST
 
 START_TEST (any)
 {
-    assert_true(vector_any(vector, always_true, NULL));    
+    assert_true(vector_any(vector, always_true, NULL));
     assert_noerr();
-    assert_false(vector_any(vector, always_false, NULL));    
+    assert_false(vector_any(vector, always_false, NULL));
     assert_noerr();
 }
 END_TEST
@@ -777,7 +806,7 @@ void *reducer(const void *one, const void *two, void *context __attribute__((unu
     const char *b = (const char *)two;
     size_t b_len = strlen(b);
     size_t length = a_len + b_len;
-    
+
     char *result = calloc(1, length + 1);
     memcpy(result, a, a_len);
     memcpy(result + a_len, b, b_len);
@@ -790,7 +819,7 @@ START_TEST (reduce_emtpy)
 {
     vector_clear(vector);
     assert_noerr();
-   
+
     assert_null(vector_reduce(vector, reducer, NULL));
     assert_errno(EINVAL);
 }
@@ -804,7 +833,7 @@ START_TEST (reduce_one)
     char *result = vector_reduce(vector, reducer, NULL);
     assert_noerr();
     assert_not_null(result);
-    assert_ptr_eq(foo, result);    
+    assert_ptr_eq(foo, result);
 }
 END_TEST
 
@@ -858,10 +887,12 @@ Suite *vector_suite(void)
     tcase_add_test(bad_input_case, bad_get);
     tcase_add_test(bad_input_case, bad_add);
     tcase_add_test(bad_input_case, bad_set);
+    tcase_add_test(bad_input_case, bad_peek);
+    tcase_add_test(bad_input_case, bad_pop);
     tcase_add_test(bad_input_case, bad_iterate);
     tcase_add_test(bad_input_case, bad_map);
     tcase_add_test(bad_input_case, bad_map_into);
-    
+
     TCase *element_case = tcase_create("element");
     tcase_add_checked_fixture(element_case, vector_setup, vector_teardown);
     tcase_add_test(element_case, ctor_dtor);
@@ -925,4 +956,3 @@ Suite *vector_suite(void)
 
     return suite;
 }
-
