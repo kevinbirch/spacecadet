@@ -29,6 +29,10 @@
  * [license]: http://www.opensource.org/licenses/ncsa
  */
 
+#ifdef __clang__
+#define __STDC_WANT_LIB_EXT1__ 1
+#endif
+
 #include <stdint.h>
 #include <stdarg.h>
 #include <string.h>
@@ -36,18 +40,18 @@
 
 #include "vector.h"
 
-static const size_t DEFAULT_CAPACITY = 4;
+static const rsize_t DEFAULT_CAPACITY = 4;
 
 struct vector_s
 {
-    size_t    length;
-    size_t    capacity;
+    rsize_t    length;
+    rsize_t    capacity;
     uint8_t **items;
 };
 
-static inline bool ensure_capacity(Vector *vector, size_t min_capacity);
-static inline size_t calculate_new_capacity(size_t capacity);
-static inline bool reallocate(Vector *vector, size_t capacity);
+static inline bool ensure_capacity(Vector *vector, rsize_t min_capacity);
+static inline rsize_t calculate_new_capacity(rsize_t capacity);
+static inline bool reallocate(Vector *vector, rsize_t capacity);
 
 
 static bool add_to_vector_iterator(void *each, void *context);
@@ -57,7 +61,7 @@ Vector *make_vector(void)
     return make_vector_with_capacity(DEFAULT_CAPACITY);
 }
 
-Vector *make_vector_with_capacity(size_t capacity)
+Vector *make_vector_with_capacity(rsize_t capacity)
 {
     if(0 == capacity)
     {
@@ -82,7 +86,7 @@ Vector *make_vector_with_capacity(size_t capacity)
     return result;
 }
 
-Vector *make_vector_of(size_t count, ...)
+Vector *make_vector_of(rsize_t count, ...)
 {
     if(0 == count)
     {
@@ -98,7 +102,7 @@ Vector *make_vector_of(size_t count, ...)
 
     va_list rest;
     va_start(rest, count);
-    for(size_t i = 0; i < count; i++)
+    for(rsize_t i = 0; i < count; i++)
     {
         void *element = va_arg(rest, void *);
         result->items[i] = element;
@@ -194,7 +198,7 @@ void vector_destroy(Vector *vector, vector_item_destructor destructor)
         return;
     }
 
-    for(size_t i = 0; i < vector->length; i++)
+    for(rsize_t i = 0; i < vector->length; i++)
     {
         destructor(vector->items[i]);
     }
@@ -202,7 +206,7 @@ void vector_destroy(Vector *vector, vector_item_destructor destructor)
     vector_free(vector);
 }
 
-size_t vector_length(const Vector *vector)
+rsize_t vector_length(const Vector *vector)
 {
     if(NULL == vector)
     {
@@ -213,7 +217,7 @@ size_t vector_length(const Vector *vector)
     return vector->length;
 }
 
-size_t vector_capacity(const Vector *vector)
+rsize_t vector_capacity(const Vector *vector)
 {
     if(NULL == vector)
     {
@@ -235,7 +239,7 @@ bool vector_is_empty(const Vector *vector)
     return 0 == vector->length;
 }
 
-void *vector_get(const Vector *vector, size_t index)
+void *vector_get(const Vector *vector, rsize_t index)
 {
     if(NULL == vector || index >= vector->length)
     {
@@ -300,7 +304,7 @@ bool vector_add_all(Vector *vector, const Vector *from)
     return vector_iterate(from, add_to_vector_iterator, vector);
 }
 
-bool vector_insert(Vector *vector, void *value, size_t index)
+bool vector_insert(Vector *vector, void *value, rsize_t index)
 {
     if(NULL == vector || NULL == value || index > vector->length)
     {
@@ -316,7 +320,7 @@ bool vector_insert(Vector *vector, void *value, size_t index)
     uint8_t **target = vector->items;
     if(vector->capacity < vector->length + 1)
     {
-        size_t new_capacity = calculate_new_capacity(vector->capacity);
+        rsize_t new_capacity = calculate_new_capacity(vector->capacity);
         target = calloc(1, sizeof(uint8_t *) * new_capacity);
         if(NULL == vector->items)
         {
@@ -351,7 +355,7 @@ bool vector_insert(Vector *vector, void *value, size_t index)
     return true;
 }
 
-void *vector_set(Vector *vector, void *value, size_t index)
+void *vector_set(Vector *vector, void *value, rsize_t index)
 {
     if(NULL == vector || NULL == value || index >= vector->length)
     {
@@ -364,7 +368,7 @@ void *vector_set(Vector *vector, void *value, size_t index)
     return previous;
 }
 
-void *vector_remove(Vector *vector, size_t index)
+void *vector_remove(Vector *vector, rsize_t index)
 {
     if(NULL == vector || index >= vector->length)
     {
@@ -394,7 +398,7 @@ bool vector_remove_item(Vector *vector, vector_comparitor comparitor, void *item
         return false;
     }
 
-    for(size_t i = 0; i < vector->length; i++)
+    for(rsize_t i = 0; i < vector->length; i++)
     {
         if(comparitor(vector->items[i], item))
         {
@@ -439,7 +443,7 @@ void *vector_find(const Vector *vector, vector_iterator iterator, void *context)
         return NULL;
     }
 
-    for(size_t i = 0; i < vector->length; i++)
+    for(rsize_t i = 0; i < vector->length; i++)
     {
         if(iterator(vector->items[i], context))
         {
@@ -457,7 +461,7 @@ bool vector_contains(const Vector *vector, vector_comparitor comparitor, void *i
         return false;
     }
 
-    for(size_t i = 0; i < vector->length; i++)
+    for(rsize_t i = 0; i < vector->length; i++)
     {
         if(comparitor(vector->items[i], item))
         {
@@ -475,7 +479,7 @@ bool vector_any(const Vector *vector, vector_iterator iterator, void *context)
         return false;
     }
 
-    for(size_t i = 0; i < vector->length; i++)
+    for(rsize_t i = 0; i < vector->length; i++)
     {
         if(iterator(vector->items[i], context))
         {
@@ -493,7 +497,7 @@ bool vector_all(const Vector *vector, vector_iterator iterator, void *context)
         return false;
     }
 
-    for(size_t i = 0; i < vector->length; i++)
+    for(rsize_t i = 0; i < vector->length; i++)
     {
         if(!iterator(vector->items[i], context))
         {
@@ -511,7 +515,7 @@ bool vector_none(const Vector *vector, vector_iterator iterator, void *context)
         return false;
     }
 
-    for(size_t i = 0; i < vector->length; i++)
+    for(rsize_t i = 0; i < vector->length; i++)
     {
         if(iterator(vector->items[i], context))
         {
@@ -521,7 +525,7 @@ bool vector_none(const Vector *vector, vector_iterator iterator, void *context)
     return true;
 }
 
-size_t vector_count(const Vector *vector, vector_iterator iterator, void *context)
+rsize_t vector_count(const Vector *vector, vector_iterator iterator, void *context)
 {
     if(NULL == vector || NULL == iterator)
     {
@@ -529,8 +533,8 @@ size_t vector_count(const Vector *vector, vector_iterator iterator, void *contex
         return 0;
     }
 
-    size_t count = 0;
-    for(size_t i = 0; i < vector->length; i++)
+    rsize_t count = 0;
+    for(rsize_t i = 0; i < vector->length; i++)
     {
         if(iterator(vector->items[i], context))
         {
@@ -560,7 +564,7 @@ bool vector_equals(const Vector *one, const Vector *two, vector_comparitor compa
     {
         return false;
     }
-    for(size_t i = 0; i < vector_length(one); i++)
+    for(rsize_t i = 0; i < vector_length(one); i++)
     {
         if(!comparitor(one->items[i], two->items[i]))
         {
@@ -578,7 +582,7 @@ bool vector_iterate(const Vector *vector, vector_iterator iterator, void *contex
         return false;
     }
 
-    for(size_t i = 0; i < vector->length; i++)
+    for(rsize_t i = 0; i < vector->length; i++)
     {
         if(!iterator(vector->items[i], context))
         {
@@ -624,7 +628,7 @@ Vector *vector_map_into(const Vector *vector, vector_mapper function, void *cont
         return false;
     }
 
-    for(size_t i = 0; i < vector->length; i++)
+    for(rsize_t i = 0; i < vector->length; i++)
     {
         if(!function(vector->items[i], context, target))
         {
@@ -649,7 +653,7 @@ void *vector_reduce(const Vector *vector, vector_reducer function, void *context
     }
 
     void *result = function(vector->items[0], vector->items[1], context);
-    for(size_t i = 2; i < vector->length; i++)
+    for(rsize_t i = 2; i < vector->length; i++)
     {
         result = function(result, vector->items[i], context);
     }
@@ -675,7 +679,7 @@ Vector *vector_filter(const Vector *vector, vector_iterator function, void *cont
     {
         return NULL;
     }
-    for(size_t i = 0; i < vector->length; i++)
+    for(rsize_t i = 0; i < vector->length; i++)
     {
         if(function(vector->items[i], context))
         {
@@ -704,7 +708,7 @@ Vector *vector_filter_not(const Vector *vector, vector_iterator function, void *
     {
         return NULL;
     }
-    for(size_t i = 0; i < vector->length; i++)
+    for(rsize_t i = 0; i < vector->length; i++)
     {
         if(!function(vector->items[i], context))
         {
@@ -715,22 +719,22 @@ Vector *vector_filter_not(const Vector *vector, vector_iterator function, void *
     return result;
 }
 
-static inline size_t calculate_new_capacity(size_t capacity)
+static inline rsize_t calculate_new_capacity(rsize_t capacity)
 {
     return (capacity * 3) / 2 + 1;
 }
 
-static inline bool ensure_capacity(Vector *vector, size_t min_capacity)
+static inline bool ensure_capacity(Vector *vector, rsize_t min_capacity)
 {
     if(vector->capacity < min_capacity)
     {
-        size_t new_capacity = calculate_new_capacity(min_capacity);
+        rsize_t new_capacity = calculate_new_capacity(min_capacity);
         return reallocate(vector, new_capacity);
     }
     return true;
 }
 
-static inline bool reallocate(Vector *vector, size_t capacity)
+static inline bool reallocate(Vector *vector, rsize_t capacity)
 {
     uint8_t **cache = vector->items;
     vector->items = realloc(vector->items, sizeof(uint8_t *) * capacity);
