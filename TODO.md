@@ -7,6 +7,7 @@
 * good api: http://cairographics.org/manual/
 * hashtable
   * bug: keys are leaked on calls to `remove()`, return key/value pair instead of just value
+  * riterate(_keys, _values)
   * `clear()` should free keys and values
   * `free()` should call clear
   * comparisons to other impls
@@ -15,6 +16,12 @@
 * vector
   * switch insert to reallocate
   * capacity: http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/6-b14/java/util/ArrayList.java#ArrayList.ensureCapacity%28int%29
+  * riterate
+  * rfind
+  * rcontains
+  * rany
+  * rmap, rmap_into
+  * rreduce
   * fill,fill_range
   * delete range
   * reverse/reverse_copy
